@@ -229,6 +229,9 @@ static int __mtdsplit_parse_uimage(struct mtd_info *master,
 		ret = -ENODEV;
 		goto err_free_buf;
 	}
+	pr_info("found uImage parts: (%llu,%llu,%llu,%llu)\n",
+		(unsigned long long)uimage_offset, (unsigned long long)uimage_size,
+		(unsigned long long)rootfs_offset, (unsigned long long)rootfs_size);
 
 	parts[uimage_part].name = KERNEL_PART_NAME;
 	parts[uimage_part].offset = uimage_offset;

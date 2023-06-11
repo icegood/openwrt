@@ -33,11 +33,18 @@ mtdsplit_parse_squashfs(struct mtd_info *master,
 	int err;
 
 	err = mtd_get_squashfs_len(master, 0, &squashfs_len);
-	if (err)
+	if (err) {
+		pr_info("mtd_get_squashfs_len no size\n");
 		return err;
+	} else {
+		pr_info("mtd_get_squashfs_len size %llu\n", (unsigned long long)squashfs_len);
+	}
 
 	parent_mtd = mtd_get_master(master);
 	part_offset = mtdpart_get_offset(master);
+	pr_info("mtdsplit_parse_squashfs parent: %llu never used: %llu\n",
+		(unsigned long long)master->size,
+		(unsigned long long)((master->size - squashfs_len)&(parent_mtd->erasesize - 1)));
 
 	part = kzalloc(sizeof(*part), GFP_KERNEL);
 	if (!part) {
