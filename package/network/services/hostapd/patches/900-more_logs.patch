@@ -1,0 +1,13 @@
+--- a/src/ap/sta_info.c
++++ b/src/ap/sta_info.c
+@@ -605,8 +605,8 @@ skip_poll:
+ 	case STA_DEAUTH:
+ 	case STA_REMOVE:
+ 		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+-			       HOSTAPD_LEVEL_INFO, "deauthenticated due to "
+-			       "inactivity (timer DEAUTH/REMOVE)");
++		 HOSTAPD_LEVEL_INFO, "deauthenticated due to "
++		 "inactivity (timeout_next=%d, cause=%d)", sta->timeout_next, sta->acct_terminate_cause);
+ 		if (!sta->acct_terminate_cause)
+ 			sta->acct_terminate_cause =
+ 				RADIUS_ACCT_TERMINATE_CAUSE_IDLE_TIMEOUT;

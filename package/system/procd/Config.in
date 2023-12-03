@@ -1,0 +1,9 @@
+menu "Configuration"
+	depends on PACKAGE_procd || PACKAGE_procd-selinux
+
+config PROCD_SHOW_BOOT
+	bool "Log to console during boot"
+	default n
+    help
+        Print the shutdown to the console as well as logging it to syslog
+endmenu

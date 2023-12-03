@@ -87,15 +87,7 @@ define Package/uxc
 endef
 
 define Package/procd/config
-menu "Configuration"
-	depends on PACKAGE_procd || PACKAGE_procd-selinux
-
-config PROCD_SHOW_BOOT
-	bool
-	default n
-	prompt "Print the shutdown to the console as well as logging it to syslog"
-
-endmenu
+	source "$(SOURCE)/Config.in"
 endef
 
 ifeq ($(BUILD_VARIANT),selinux)

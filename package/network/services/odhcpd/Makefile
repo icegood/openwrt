@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=odhcpd
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1.1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(PROJECT_GIT)/project/odhcpd.git
-PKG_SOURCE_DATE:=2023-01-02
-PKG_SOURCE_VERSION:=4a673e1cd26d58ebf4397dd06ee5fa39f7f832da
-PKG_MIRROR_HASH:=c57788de10d28995fb389ce4be783c3cc2afbf87202d3c25a4534f9c3c27f216
+PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/odhcpd_src/.git
+PKG_SOURCE_DATE:=2023-12-28
+PKG_SOURCE_VERSION:=3712e01
+
 
 PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
 PKG_LICENSE:=GPL-2.0
