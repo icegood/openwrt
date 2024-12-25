@@ -10,10 +10,10 @@ PKG_NAME:=firmware-utils
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(PROJECT_GIT)/project/firmware-utils.git
-PKG_SOURCE_DATE:=2024-10-20
-PKG_SOURCE_VERSION:=4b7638925d3eac03e614e40bc30cb49f5877c46d
-PKG_MIRROR_HASH:=ea0e30f2b20211e4153704019ebb3f8789269893a4af6d853a85fae7c091802c
+PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/firmware-utils/.git
+PKG_SOURCE_DATE:=2025-01-07
+PKG_SOURCE_VERSION:=597b3c214980092bfd4e2ab64b9e5c989ed18cc3
+PKG_MIRROR_HASH:=skip
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk

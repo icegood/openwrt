@@ -160,6 +160,63 @@ menu "Target Images"
 			  Select squashfs block size, must be one of:
 			    4, 8, 16, 32, 64, 128, 256, 512, 1024
 
+		choice TARGET_SQUASHFS_COMPRESSION
+			prompt "Compress algorithm for squashfs"
+			default TARGET_SQUASHFS_COMPRESSION_XZ
+			depends on TARGET_ROOTFS_SQUASHFS
+			help
+				Select squashfs compression. XZ is most preferable for today
+				Each of case depend on appropriate support from kernel
+			
+			config TARGET_SQUASHFS_COMPRESSION_XZ
+				bool "xz"
+
+			config TARGET_SQUASHFS_COMPRESSION_GZIP
+				bool "gzip"
+
+			config TARGET_SQUASHFS_COMPRESSION_LZO
+				bool "lzo"
+
+			config TARGET_SQUASHFS_COMPRESSION_LZ4
+				bool "lz4"
+
+			config TARGET_SQUASHFS_COMPRESSION_ZSTD
+				bool "zstd"
+
+			config TARGET_SQUASHFS_COMPRESSION_LZMA
+				bool "lzma. Obsolete. Supported only by squashfs_lzma"
+
+		endchoice
+
+		config TARGET_SQUASHFS_COMPRESSION_PARAMS
+			string
+			default "-Xpreset 9 -Xe -Xlc 0 -Xlp 2 -Xpb 2" if TARGET_SQUASHFS_COMPRESSION_XZ
+			default "-Xcompression-level 9" if TARGET_SQUASHFS_COMPRESSION_GZIP
+			default "-Xalgorithm lzo1x_999 -Xcompression-level 9" if TARGET_SQUASHFS_COMPRESSION_LZO
+			default "-Xhc" if TARGET_SQUASHFS_COMPRESSION_LZ4
+			default "-Xcompression-level 22" if TARGET_SQUASHFS_COMPRESSION_ZSTD
+			depends on TARGET_ROOTFS_SQUASHFS
+			help
+				Additional parameters based on
+				compession method selected above
+
+		choice TARGET_SQUASHFS_EXEC
+			prompt "Executable for squashfs"
+			default TARGET_SQUASHFS_EXEC_squashfskit4
+			depends on TARGET_ROOTFS_SQUASHFS
+			help
+				Executable for squashfs-ing. 
+			
+			config TARGET_SQUASHFS_EXEC_squashfs_tools
+				bool "squashfs-tools: latest official version"	
+
+			config TARGET_SQUASHFS_EXEC_squashfskit4
+				bool "squashfskit4: customized squashfs-tools but not maintained. Still best for xz"	
+						
+			config TARGET_SQUASHFS_EXEC_squashfs_lzma
+				bool "squashfs with old lzma support"
+		endchoice
+
 	menuconfig TARGET_ROOTFS_UBIFS
 		bool "ubifs"
 		default y if USES_UBIFS

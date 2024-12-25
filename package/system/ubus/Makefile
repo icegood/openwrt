@@ -4,10 +4,10 @@ PKG_NAME:=ubus
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(PROJECT_GIT)/project/ubus.git
-PKG_SOURCE_DATE:=2025-01-02
-PKG_SOURCE_VERSION:=afa57cce0aff82f4a7a0e509d4387ebc23dd3be7
-PKG_MIRROR_HASH:=a0b3c1961f5f49d31c34a44576ce44538c3ee97bfce97f86f732d7ecc1df9798
+PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/ubus_src/.git
+PKG_SOURCE_DATE:=2024-12-27
+PKG_SOURCE_VERSION:=f8df4cfa62d12f88af5b5d7db389bca9b9e7021c
+PKG_MIRROR_HASH:=skip
 PKG_ABI_VERSION:=$(call abi_version_str,$(PKG_SOURCE_DATE))
 CMAKE_INSTALL:=1
 

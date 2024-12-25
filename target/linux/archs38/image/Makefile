@@ -34,16 +34,9 @@ endif
 
 # Root FS on SD-card
 KERNEL_LOADADDR := 0x90000000
-DEVICE_DTS_LIST:= axs103_idu haps_hs hsdk
+DEVICE_DTS_ADDITIONALS := axs103_idu haps_hs hsdk
 FAT32_BLOCK_SIZE=1024
 FAT32_BLOCKS=$(shell echo $$(($(CONFIG_AXS10X_SD_BOOT_PARTSIZE)*1024*1024/$(FAT32_BLOCK_SIZE))))
-
-define Image/Prepare
-	# Build .dtb for all boards we may run on
-	$(foreach dts,$(DEVICE_DTS_LIST),
-		$(call Image/BuildDTB,$(DTS_DIR)/$(dts).dts,$(DTS_DIR)/$(dts).dtb)
-	)
-endef
 
 define Image/Build/SDCard
 	rm -f $(KDIR_TMP)/$(IMG_PREFIX)-$(PROFILE)-boot.img

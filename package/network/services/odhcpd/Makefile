@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=odhcpd
-PKG_RELEASE:=1.1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/icegood/odhcpd.git
-PKG_MIRROR_HASH:=f6e1c18551a00e01229fa12caa7b3fe33ad82785150fedcbe615fcc651ba2876
-PKG_SOURCE_DATE:=2024-05-09
-PKG_SOURCE_VERSION:=b72bef9fb988f5d76cac70c0597ec06f33137a2d
+PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/odhcpd_src/.git
+PKG_SOURCE_DATE:=2025-01-10
+PKG_SOURCE_VERSION:=5f57d887a4bc3cda02090c3de656fce5dd82d7e0
+PKG_MIRROR_HASH:=skip
 
 
 PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
@@ -83,7 +82,7 @@ define Package/odhcpd-ipv6only/description
  routed (non-bridged) interfaces in case no delegated prefixes are available.
 endef
 
-# CMAKE_OPTIONS += -DUBUS=1
+CMAKE_OPTIONS += -DUBUS=1
 
 ifeq ($(BUILD_VARIANT),full)
   CMAKE_OPTIONS += -DDHCPV4_SUPPORT=1

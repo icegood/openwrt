@@ -13,7 +13,7 @@ PKG_INSTALL_DIR ?= $(PKG_BUILD_DIR)/ipkg-install
 PKG_BUILD_PARALLEL ?=
 PKG_SKIP_DOWNLOAD=$(USE_SOURCE_DIR)$(USE_GIT_TREE)$(USE_GIT_SRC_CHECKOUT)
 
-MAKE_J:=$(if $(MAKE_JOBSERVER),$(MAKE_JOBSERVER) $(if $(filter 3.% 4.0 4.1,$(MAKE_VERSION)),-j))
+MAKE_J:=$(if $(MAKE_JOBSERVER),$(MAKE_JOBSERVER) $(if $(filter 3.% 4.%,$(MAKE_VERSION)),-j))
 
 PKG_SOURCE_DATE_EPOCH:=$(if $(DUMP),,$(shell $(TOPDIR)/scripts/get_source_date_epoch.sh $(CURDIR)))
 

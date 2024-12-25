@@ -80,19 +80,49 @@ ifneq ($(CONFIG_JFFS2_LZMA),y)
   JFFS2OPTS += -x lzma
 endif
 
+define Image/mkfs/squashfs-params-check-pair
+  ifneq ($(CONFIG_TARGET_SQUASHFS_COMPRESSION_$(1)),)
+    ifeq ($(CONFIG_SQUASHFS_$(2)),y)
+      SQUASHFSCOMP := $(subst $\",,$(3) $(CONFIG_TARGET_SQUASHFS_COMPRESSION_PARAMS))
+    else
+      $$(error Cannot define squashfs compression CONFIG_TARGET_SQUASHFS_COMPRESSION_$(1) \
+        without kernel support for CONFIG_SQUASHFS_$(2))
+    endif
+  endif
+endef
+
+define Image/mkfs/squashfs-params-check
+  $(call Image/mkfs/squashfs-params-check-pair,GZIP,ZLIB,gzip)
+  $(call Image/mkfs/squashfs-params-check-pair,LZO,LZO,lzo)
+  $(call Image/mkfs/squashfs-params-check-pair,LZ4,LZ4,lz4)
+  $(call Image/mkfs/squashfs-params-check-pair,ZSTD,ZSTD,zstd)
+  $(call Image/mkfs/squashfs-params-check-pair,XZ,XZ,xz)
+endef
+
+define Image/mkfs/squashfs-get-exec-one
+  ifneq ($(CONFIG_TARGET_SQUASHFS_EXEC_$(1)),)
+    SQUASHFEXEC_SUFFIX := $(2)
+  endif
+endef
+
+define Image/mkfs/squashfs-get-exec
+  $(call Image/mkfs/squashfs-get-exec-one,squashfs_tools,)
+  $(call Image/mkfs/squashfs-get-exec-one,squashfskit4,4)
+  $(call Image/mkfs/squashfs-get-exec-one,squashfs_lzma,-lzma)
+endef
+
 JFFS2OPTS += $(MKFS_DEVTABLE_OPT)
 
-SQUASHFS_BLOCKSIZE := $(CONFIG_TARGET_SQUASHFS_BLOCK_SIZE)k
-SQUASHFSOPT := -b $(SQUASHFS_BLOCKSIZE)
-SQUASHFSOPT += -p '/dev d 755 0 0' -p '/dev/console c 600 0 0 5 1'
-SQUASHFSOPT += $(if $(CONFIG_SELINUX),-xattrs,-no-xattrs)
-SQUASHFSCOMP := gzip
-LZMA_XZ_OPTIONS := -Xpreset 9 -Xe -Xlc 0 -Xlp 2 -Xpb 2
-ifeq ($(CONFIG_SQUASHFS_XZ),y)
-  ifneq ($(filter arm x86 powerpc sparc,$(LINUX_KARCH)),)
-    BCJ_FILTER:=-Xbcj $(LINUX_KARCH)
-  endif
-  SQUASHFSCOMP := xz $(LZMA_XZ_OPTIONS) $(BCJ_FILTER)
+ifeq ($(CONFIG_SQUASHFS),y)
+    SQUASHFS_BLOCKSIZE := $(CONFIG_TARGET_SQUASHFS_BLOCK_SIZE)k
+    SQUASHFSOPT := -b $(SQUASHFS_BLOCKSIZE)
+    SQUASHFSOPT += -p '/dev d 755 0 0' -p '/dev/console c 600 0 0 5 1'
+    SQUASHFSOPT += $(if $(CONFIG_SELINUX),-xattrs,-no-xattrs)
+    $(eval $(call Image/mkfs/squashfs-params-check))
+    ifndef SQUASHFSCOMP
+        $(error None of squashfs compessors defined)
+    endif
+    $(eval $(call Image/mkfs/squashfs-get-exec))
 endif
 
 JFFS2_BLOCKSIZE ?= 64k 128k
@@ -211,6 +241,7 @@ endef
 # $(3) extra CPP flags
 # $(4) extra DTC flags
 define Image/BuildDTB/sub
+	echo "Build .dtb for: $(1)"
 	$(TARGET_CROSS)cpp -nostdinc -x assembler-with-cpp \
 		$(DTS_CPPFLAGS) \
 		-I$(DTS_DIR) \
@@ -265,15 +296,16 @@ $(eval $(foreach S,$(JFFS2_BLOCKSIZE),$(call Image/mkfs/jffs2/template,$(S))))
 $(eval $(foreach S,$(NAND_BLOCKSIZE),$(call Image/mkfs/jffs2-nand/template,$(S))))
 
 define Image/mkfs/squashfs-common
+	$(INSTR_QUIET) echo -e "squashfs-common exec: $(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX)" >> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "squashfs-common src: $(call mkfs_target_dir,$(1))" >> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "squashfs-common dest: $@\n" >> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "squashfs-common SQUASHFSCOMP: $(SQUASHFSCOMP)\n" >> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "squashfs-common SQUASHFSOPT: $(SQUASHFSOPT)\n" >> $(IMAGE_STAT_FILE)
-	$(STAGING_DIR_HOST)/bin/mksquashfs4 $(call mkfs_target_dir,$(1)) $@ \
+	$(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX) $(call mkfs_target_dir,$(1)) $@ \
 		-nopad -noappend -root-owned \
 		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "=========" >> $(IMAGE_STAT_FILE)
-	$(STAGING_DIR_HOST)/bin/unsquashfs4 -s $@ >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
+	$(STAGING_DIR_HOST)/bin/unsquashfs$(SQUASHFEXEC_SUFFIX) -s $@ >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
@@ -669,6 +701,7 @@ define Device/Build/compile
 endef
 
 ifndef IB
+
 define Device/Build/dtb
   ifndef BUILD_DTS_$(1)
   BUILD_DTS_$(1) := 1
@@ -677,7 +710,6 @@ define Device/Build/dtb
 
   compile-dtb: $(KDIR)/image-$(1).dtb
   endif
-
 endef
 
 define Device/Build/dtbo
@@ -688,24 +720,24 @@ define Device/Build/dtbo
 
   compile-dtb: $(KDIR)/image-$(1).dtbo
   endif
-
 endef
+
 endif
 
 define Device/Build/kernel
+ifneq ($$(call DEVICE_CHECK_PROFILE,DEVICE_$(1)),)
   $$(eval $$(foreach dts,$$(DEVICE_DTS), \
-	$$(call Device/Build/dtb,$$(notdir $$(dts)), \
-		$$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), \
-		$$(dts) \
-	) \
-  ))
-  $$(eval $$(foreach dtso,$$(DEVICE_DTS_OVERLAY), \
-	$$(call Device/Build/dtbo,$$(notdir $$(dtso)), \
-		$$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), \
-		$$(dtso) \
-	) \
-  ))
+      $$(call Device/Build/dtb,$$(notdir $$(dts)), \
+      $$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), $$(dts))))
 
+  $$(eval $$(foreach dtso,$$(DEVICE_DTS_OVERLAY), \
+      $$(call Device/Build/dtbo,$$(notdir $$(dtso)), \
+      $$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), $$(dtso))))
+  
+  $$(eval $$(foreach dts,$$(DEVICE_DTS_ADDITIONALS),\
+      $$(call Device/Build/dtb,$$(notdir $$(dts)),\
+      $$(DTS_DIR),$$(dts))))
+endif
   $(KDIR)/$$(KERNEL_NAME):: image_prepare
   $$(_TARGET): $$(if $$(KERNEL_INSTALL),$(BIN_DIR)/$$(KERNEL_IMAGE))
   $(call Device/Export,$$(KDIR_KERNEL_IMAGE),$(1))

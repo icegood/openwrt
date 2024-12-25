@@ -252,6 +252,8 @@ define Build/buffalo-trx
 	mv $@.new $@
 endef
 
+# $1 - size to check against, if not explicitly added then to check against IMAGE_SIZE
+# if implicit then additionally create stat message on both kernel and ramfs
 define Build/check-size
 	$(INSTR_QUIET) if [ -z "$(1)" ]; then \
 		_kernel_size="$(shell stat -c%s $(IMAGE_KERNEL))"; \
@@ -706,12 +708,12 @@ define Build/tplink-v2-image
 	$(INSTR_QUIET) echo $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-H $(TPLINK_HWID) -W $(TPLINK_HWREV) \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
-		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j $(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
+		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
 		-k $(IMAGE_KERNEL) -r $(IMAGE_ROOTFS) -o $@.new $(1) >> $(IMAGE_STAT_FILE)
 	$(INSTR_QUIET) $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-H $(TPLINK_HWID) -W $(TPLINK_HWREV) \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
-		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j $(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
+		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
 		-k $(IMAGE_KERNEL) -r $(IMAGE_ROOTFS) -o $@.new $(1) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)\
 	&& cat $@.new >> $@ && rm -rf $@.new || rm -f $@
 	$(INSTR_QUIET) echo -e "=========" >> $(IMAGE_STAT_FILE)
