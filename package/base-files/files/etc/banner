@@ -6,3 +6,23 @@
  -----------------------------------------------------
  %D %V, %C
  -----------------------------------------------------
+
+custom image for DIR-620 revA1
+is created by Sergey Ivanov
+icegood1980@gmail.com
+See my github for customized changes:
+https://github.com/icegood
+
+Customized changes:
+
+1) customized basic packages
+2) customized log daemon (could save logs on both runtime buffer and external device)
+3) advanced ppp (ver 2.5.1 as of now)
+4) usb port support
+5) any file systems support (primarily for usage via usb)
+6) multi-wlan
+7) dhcp for both ipv4/ipv6 is only via odhcpd (the latest is customized to work properly)
+8) "never used" space control via both kernel and build system. Such space is minimized
+
+All the things that are done 
+just for my precisious fun :)

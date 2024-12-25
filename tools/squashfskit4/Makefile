@@ -23,8 +23,9 @@ define Host/Compile
 		XZ_SUPPORT=1 \
 		LZMA_XZ_SUPPORT=1 \
 		XATTR_SUPPORT=1 \
-		LZMA_LIB="$(STAGING_DIR_HOST)/lib/liblzma.a" \
-		EXTRA_CFLAGS="-I$(STAGING_DIR_HOST)/include" \
+		LZO_SUPPORT=0 \
+		LZ4_SUPPORT=1 \
+		ZSTD_SUPPORT=1 \
 		mksquashfs unsquashfs
 endef
 

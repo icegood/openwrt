@@ -7,7 +7,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/libubox_src/.git
 PKG_MIRROR_HASH:=skip
 PKG_SOURCE_DATE:=2024-01-01
-PKG_SOURCE_VERSION:=6187c52
+PKG_SOURCE_VERSION:=248f0749a5f6fd001a0da5582e44c4b6f1b388db
 PKG_ABI_VERSION:=$(call abi_version_str,$(PKG_SOURCE_DATE))
 CMAKE_INSTALL:=1
 

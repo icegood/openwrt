@@ -205,12 +205,22 @@ define Build/buffalo-tag-dhp
 	mv $@.new $@
 endef
 
+# $1 - size to check against, if not explicitly added then to check against IMAGE_SIZE
+# if implicit then additionally create stat message on both kernel and ramfs
 define Build/check-size
-	@imagesize="$$(stat -c%s $@)"; \
+	$(INSTR_QUIET) if [ -z "$(1)" ]; then \
+		_kernel_size="$(shell stat -c%s $(IMAGE_KERNEL))"; \
+		_image_size="$(shell stat -c%s $(IMAGE_ROOTFS))"; \
+		echo -e "$(IMAGE_KERNEL): $${_kernel_size}" >> $(IMAGE_STAT_FILE); \
+		echo -e "$(IMAGE_ROOTFS): $${_image_size}\n" >> $(IMAGE_STAT_FILE); \
+		echo -e "=========" >> $(IMAGE_STAT_FILE); \
+		$(call ERROR_MESSAGE, File "$(notdir $(IMAGE_STAT_FILE))" ready);  \
+	fi; \
+	imagesize="$$(stat -c%s $@)"; \
 	limitsize="$$(($(subst k,* 1024,$(subst m, * 1024k,$(if $(1),$(1),$(IMAGE_SIZE))))))"; \
 	[ $$limitsize -ge $$imagesize ] || { \
-		$(call ERROR_MESSAGE,    WARNING: Image file $@ is too big: $$imagesize > $$limitsize); \
-		rm -f $@; \
+		$(call ERROR_MESSAGE,    WARNING: Image file $@ is too big: \"$${imagesize}\" > \"$${limitsize}\"); \
+		echo rm -f $@; \
 	}
 endef
 
@@ -294,12 +304,12 @@ define Build/fit
 		-A $(LINUX_KARCH) -v $(LINUX_VERSION)
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage $(if $(findstring external,$(word 3,$(1))),\
 		-E -B 0x1000 $(if $(findstring static,$(word 3,$(1))),-p 0x1000)) -f $@.its $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/gzip
 	gzip -f -9n -c $@ $(1) > $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/install-dtb
@@ -335,7 +345,7 @@ define Build/jffs2
 			2>&1 1>/dev/null | awk '/^.+$$$$/' && \
 		$(STAGING_DIR_HOST)/bin/padjffs2 $@.new -J $(patsubst %k,,$(BLOCKSIZE))
 	-rm -rf $(KDIR_TMP)/$(DEVICE_NAME)/jffs2/
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/kernel2minor
@@ -364,7 +374,7 @@ endef
 
 define Build/lzma-no-dict
 	$(STAGING_DIR_HOST)/bin/lzma e $@ $(1) $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/netgear-chk
@@ -427,8 +437,11 @@ define Build/pad-offset
 endef
 
 define Build/pad-rootfs
+	@echo $(STAGING_DIR_HOST)/bin/padjffs2 $@ $(1) \
+		$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),4 8 16 64 128 256) >> $(IMAGE_STAT_FILE)
 	$(STAGING_DIR_HOST)/bin/padjffs2 $@ $(1) \
-		$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),4 8 16 64 128 256)
+		$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),4 8 16 64 128 256) 2>> $(IMAGE_STAT_FILE) >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET) echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 define Build/pad-to
@@ -454,14 +467,14 @@ define Build/qsdk-ipq-factory-nand
 	$(TOPDIR)/scripts/mkits-qsdk-ipq-image.sh \
 		$@.its ubi $@
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/qsdk-ipq-factory-nor
 	$(TOPDIR)/scripts/mkits-qsdk-ipq-image.sh \
 		$@.its hlos $(IMAGE_KERNEL) rootfs $(IMAGE_ROOTFS)
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/seama
@@ -507,7 +520,7 @@ define Build/tplink-v1-header
 		-E $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
 		-m $(TPLINK_HEADER_VERSION) -N "$(VERSION_DIST)" -V $(REVISION) \
 		-k $@ -o $@.new $(1)
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 # combine kernel and rootfs into one image
@@ -535,7 +548,7 @@ define Build/tplink-v2-header
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" \
 		-k $@ -o $@.new $(1)
-	@mv $@.new $@
+	$(INSTR_QUIET) mv $@.new $@
 endef
 
 define Build/tplink-v2-image
@@ -549,6 +562,8 @@ define Build/tplink-v2-image
 endef
 
 define Build/uImage
+	$(INSTR_QUIET) echo "Build/uImage: $@" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET) echo "Build/uImage args: $(1)" >> $(IMAGE_STAT_FILE)
 	mkimage \
 		-A $(LINUX_KARCH) \
 		-O linux \
@@ -559,7 +574,8 @@ define Build/uImage
 		-n '$(if $(UIMAGE_NAME),$(UIMAGE_NAME),$(call toupper,$(LINUX_KARCH)) $(VERSION_DIST) Linux-$(LINUX_VERSION))' \
 		$(if $(UIMAGE_MAGIC),-M $(UIMAGE_MAGIC)) \
 		$(wordlist 2,$(words $(1)),$(1)) \
-		-d $@ $@.new
+		-d $@ $@.new >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET) echo -e "=========" >> $(IMAGE_STAT_FILE)
 	mv $@.new $@
 endef
 

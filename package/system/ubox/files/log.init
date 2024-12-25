@@ -46,15 +46,6 @@ start_service_read()
 		return 1
 	}
 
-	if [ -n "${log_file}" ]; then
-		if [ "$_BOOT" = "1" ] && [ "$(procd_get_mountpoints "${log_file}")" ]; then
-			log_file=
-			echo "Ignore log file during boot as hasn't mounted yet"
-		else 
-			mkdir -p "$(dirname "${log_file}")"
-		fi
-	fi
-
 	if [ -z "${log_ip}" ] && [ -z "${log_file}" ]; then
 		echo "No log read configured"
 		return
@@ -75,17 +66,12 @@ start_service_read()
 	procd_close_instance
 }
 
-register_mount_trigger()
-{
-	[ -n "${log_file}" ] && procd_add_action_mount_trigger start "${log_file}"
-}
-
 service_triggers()
 {
 	config_load system
 	procd_add_reload_trigger "system"
 	procd_add_validation validate_log_reader
-	config_foreach validate_log_reader system register_mount_trigger
+	config_foreach validate_log_reader system
 }
 
 start_service()
@@ -93,8 +79,4 @@ start_service()
 	config_load system
 	config_foreach validate_log_daemon system start_service_daemon
 	config_foreach validate_log_reader system start_service_read
-}
-
-boot() {
-	_BOOT=1 start
 }

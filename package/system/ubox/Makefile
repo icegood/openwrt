@@ -5,8 +5,8 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/ubox_src/.git
-PKG_SOURCE_DATE:=2024-01-01
-PKG_SOURCE_VERSION:=b68c6d1879f2c4ed8e55a8e4f113616eacdfaaaf
+PKG_SOURCE_DATE:=2024-01-06
+PKG_SOURCE_VERSION:=5ee785e4cb0f2a795ed77415cc9e4cc2c4264dfd
 PKG_MIRROR_HASH:=skip
 CMAKE_INSTALL:=1
 

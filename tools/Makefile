@@ -23,9 +23,9 @@ endif
 
 tools-y += autoconf autoconf-archive automake bc bison cmake cpio dosfstools
 tools-y += e2fsprogs expat fakeroot findutils firmware-utils flex gengetopt
-tools-y += libressl libtool lzma m4 make-ext4fs meson missing-macros mkimage
+tools-y += libressl libtool liblz4 lzma m4 make-ext4fs meson missing-macros mkimage
 tools-y += mklibs mtd-utils mtools ninja padjffs2 patch-image
-tools-y += patchelf pkgconf quilt squashfskit4 sstrip zip zlib zstd
+tools-y += patchelf pkgconf quilt squashfs-tools squashfskit4 sstrip zip zlib zstd
 tools-$(BUILD_B43_TOOLS) += b43-tools
 tools-$(BUILD_ISL) += isl
 tools-$(BUILD_TOOLCHAIN) += gmp mpc mpfr
@@ -71,12 +71,15 @@ $(curdir)/patchelf/compile := $(curdir)/libtool/compile
 $(curdir)/pkgconf/compile := $(curdir)/meson/compile
 $(curdir)/quilt/compile := $(curdir)/autoconf/compile $(curdir)/findutils/compile
 $(curdir)/sdcc/compile := $(curdir)/bison/compile
-$(curdir)/squashfs/compile := $(curdir)/lzma-old/compile
-$(curdir)/squashfskit4/compile := $(curdir)/xz/compile $(curdir)/zlib/compile
+#$(curdir)/squashfs/compile := $(curdir)/lzma-old/compile
+$(curdir)/squashfskit4/compile := $(curdir)/xz/compile $(curdir)/zlib/compile $(curdir)/zstd/ $(curdir)/lzma/compile $(curdir)/liblz4/compile
+$(curdir)/squashfs-tools/compile := $(curdir)/xz/compile $(curdir)/zlib/compile $(curdir)/zstd/ $(curdir)/lzma/compile $(curdir)/liblz4/compile
+$(curdir)/liblz4/compile := $(curdir)/meson/compile
 $(curdir)/zstd/compile := $(curdir)/meson/compile
 
 ifneq ($(HOST_OS),Linux)
   $(curdir)/squashfskit4/compile += $(curdir)/coreutils/compile
+  $(curdir)/squashfs-tools/compile += $(curdir)/coreutils/compile
   tools-y += coreutils
 endif
 ifeq ($(HOST_OS),Darwin)
@@ -84,7 +87,7 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 ifneq ($(CONFIG_CCACHE)$(CONFIG_SDK),)
-$(foreach tool, $(filter-out zstd zlib xz pkgconf patch ninja meson libressl expat cmake,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/compile))
+$(foreach tool, $(filter-out zstd zlib xz lzma pkgconf patch ninja meson libressl expat cmake,$(tools-y)), $(eval $(curdir)/$(tool)/compile += $(curdir)/ccache/compile))
 tools-y += ccache
 $(curdir)/ccache/compile := $(curdir)/cmake/compile
 endif

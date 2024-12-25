@@ -141,6 +141,7 @@ ifeq ($(or $(CONFIG_EXTERNAL_TOOLCHAIN),$(CONFIG_TARGET_uml)),)
 endif
 
 PACKAGE_DIR:=$(BIN_DIR)/packages
+IMAGE_STAT_FILE:=$(BIN_DIR)/image_stat
 PACKAGE_DIR_ALL:=$(TOPDIR)/staging_dir/packages/$(BOARD)
 BUILD_DIR:=$(BUILD_DIR_BASE)/$(TARGET_DIR_NAME)
 STAGING_DIR:=$(TOPDIR)/staging_dir/$(TARGET_DIR_NAME)

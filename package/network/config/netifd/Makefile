@@ -4,9 +4,9 @@ PKG_NAME:=netifd
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=$(PROJECT_GIT)/project/netifd.git
-PKG_SOURCE_DATE:=2022-08-25
-PKG_SOURCE_VERSION:=76d2d41b7355e02f95fbfa79affbd232fb090595
+PKG_SOURCE_URL=/home/ice/external/openwrt_build/under_env/local_packages/netifd_src/.git
+PKG_SOURCE_DATE:=2024-12-31
+PKG_SOURCE_VERSION:=89e00f2229cae865c9b3ae67a6a3d7c35bafca99
 PKG_MIRROR_HASH:=cd754decce7d9f9c69e0ad8c6801f306fa37dd6c8a7039aea610c1c71d06b8f9
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 
@@ -22,7 +22,7 @@ define Package/netifd
   DEPENDS:=+libuci +libnl-tiny +libubus +ubus +ubusd +jshn +libubox
   TITLE:=OpenWrt Network Interface Configuration Daemon
 endef
-
+ 
 define Package/netifd/conffiles
 /etc/udhcpc.user
 /etc/udhcpc.user.d/
