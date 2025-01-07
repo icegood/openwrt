@@ -860,6 +860,7 @@ endef
 TARGET_DEVICES += tplink_tl-wr840n-v4
 
 define Device/tplink_tl-wr840n-v5
+  BLOCKSIZE := 64k
   $(Device/tplink-v2)
   IMAGE_SIZE := 3904k
   DEVICE_MODEL := TL-WR840N
