@@ -16,12 +16,8 @@ override MAKEFLAGS=
 SDK_NAME:=$(VERSION_DIST_SANITIZED)-sdk-$(if $(CONFIG_VERSION_FILENAMES),$(VERSION_NUMBER)-)$(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))$(if $(GCCV),_gcc-$(GCCV))$(DIR_SUFFIX).$(HOST_OS)-$(HOST_ARCH)
 SDK_BUILD_DIR:=$(BUILD_DIR)/$(SDK_NAME)
 
-STAGING_SUBDIR_HOST := staging_dir/host
-STAGING_SUBDIR_TARGET := staging_dir/$(TARGET_DIR_NAME)
-STAGING_SUBDIR_TOOLCHAIN := staging_dir/toolchain-$(ARCH)$(ARCH_SUFFIX)_gcc-$(GCCV)_$(LIBC)$(if $(CONFIG_arm),_eabi)
-
 BUNDLER_PATH := $(subst $(space),:,$(filter-out $(TOPDIR)/%,$(subst :,$(space),$(PATH))))
-BUNDLER_COMMAND := PATH=$(BUNDLER_PATH) $(XARGS) $(SCRIPT_DIR)/bundle-libraries.sh $(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)
+BUNDLER_COMMAND := PATH=$(BUNDLER_PATH) $(XARGS) $(SCRIPT_DIR)/bundle-libraries.sh $(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)
 
 EXCLUDE_DIRS:= \
 	*/stamp \
@@ -35,8 +31,8 @@ EXCLUDE_DIRS:= \
 	*/share/locale
 
 SDK_DIRS = \
-		$(STAGING_SUBDIR_HOST) \
-		$(STAGING_SUBDIR_TOOLCHAIN)
+		$(STAGING_DIR_HOST) \
+		$(TOOLCHAIN_DIR)
 
 GIT_URL:=$(shell git config --get remote.origin.url 2>/dev/null)
 GIT_URL:=$(if $(CONFIG_BUILDBOT),$(filter git://% http://% https://%,$(GIT_URL)),$(GIT_URL))
@@ -105,8 +101,8 @@ $(BIN_DIR)/$(SDK_NAME).tar.zst: clean
 	mkdir -p \
 		$(SDK_BUILD_DIR)/dl \
 		$(SDK_BUILD_DIR)/package \
-		$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_TARGET)/include \
-		$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_TARGET)/usr/include
+		$(SDK_BUILD_DIR)/$(STAGING_DIR)/include \
+		$(SDK_BUILD_DIR)/$(STAGING_DIR)/usr/include
 
 	$(CP) -L $(INCLUDE_DIR) $(SCRIPT_DIR) $(SDK_BUILD_DIR)/
 	$(TAR) -cf - -C $(TOPDIR) \
@@ -120,26 +116,26 @@ $(BIN_DIR)/$(SDK_NAME).tar.zst: clean
 	$(TAR) -cf - -C $(TOPDIR) $(USERSPACE_FILES) | \
 		$(TAR) -xf - -C $(SDK_BUILD_DIR)
 
-	(cd $(SDK_BUILD_DIR); find $(STAGING_SUBDIR_HOST)/bin $(STAGING_SUBDIR_HOST)/usr/bin \
-		$(STAGING_SUBDIR_HOST)/llvm-bpf/bin $(STAGING_SUBDIR_HOST)/llvm-bpf/libexec \
-		$(STAGING_SUBDIR_TOOLCHAIN)/bin $(STAGING_SUBDIR_TOOLCHAIN)/*/bin $(STAGING_SUBDIR_TOOLCHAIN)/libexec \
+	(cd $(SDK_BUILD_DIR); find $(STAGING_DIR_HOST)/bin $(STAGING_DIR_HOST)/usr/bin \
+		$(STAGING_DIR_HOST)/llvm-bpf/bin $(STAGING_DIR_HOST)/llvm-bpf/libexec \
+		$(TOOLCHAIN_DIR)/bin $(TOOLCHAIN_DIR)/*/bin $(TOOLCHAIN_DIR)/libexec \
 		$(KDIR_BASE) \
 		-type f | $(BUNDLER_COMMAND))
 
 	@-( \
 		find \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/bin \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/usr/bin \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/llvm-bpf/bin \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/llvm-bpf/libexec \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_TOOLCHAIN)/bin \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_TOOLCHAIN)/*/bin \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_TOOLCHAIN)/libexec \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/bin \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/usr/bin \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/llvm-bpf/bin \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/llvm-bpf/libexec \
+			$(SDK_BUILD_DIR)/$(TOOLCHAIN_DIR)/bin \
+			$(SDK_BUILD_DIR)/$(TOOLCHAIN_DIR)/*/bin \
+			$(SDK_BUILD_DIR)/$(TOOLCHAIN_DIR)/libexec \
 			-type f; \
 		find \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/lib \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/llvm-bpf/lib \
-			$(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/usr/lib \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/lib \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/llvm-bpf/lib \
+			$(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/usr/lib \
 			-type f -name \*.so\*; \
 	) | xargs strip 2>/dev/null >/dev/null
 
@@ -167,9 +163,9 @@ $(BIN_DIR)/$(SDK_NAME).tar.zst: clean
 		$(TOPDIR)/package/kernel/linux \
 		$(SDK_BUILD_DIR)/package/kernel/
 
-	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/.prereq-build
-	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/doc
-	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_SUBDIR_HOST)/share/doc
+	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/.prereq-build
+	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/doc
+	-rm -rf $(SDK_BUILD_DIR)/$(STAGING_DIR_HOST)/share/doc
 
 	-rm -f $(SDK_BUILD_DIR)/feeds.conf.default
 	$(if $(BASE_FEED),echo "$(BASE_FEED)" > $(SDK_BUILD_DIR)/feeds.conf.default)
