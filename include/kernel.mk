@@ -180,14 +180,22 @@ endef
 # 3: module priority prefix
 # 4: required for boot
 # 5: module list
+# 6: if comoon file for module name provided then install to this one
+
 define ModuleAutoLoad
-  $(if $(5), \
-    mkdir -p $(2)/etc/modules.d; \
-    ($(foreach mod,$(5), \
-      echo "$(mod)$(if $(MODPARAMS.$(mod)), $(MODPARAMS.$(mod)),$(if $(MODPARAMS), $(MODPARAMS)))"; )) > $(2)/etc/modules.d/$(3)$(1); \
-    $(if $(4), \
-      mkdir -p $(2)/etc/modules-boot.d; \
-      ln -sf ../modules.d/$(3)$(1) $(2)/etc/modules-boot.d/;))
+$(if $(5),
+	mkdir -p $(2)/etc/modules.d
+$(if $(6),
+	echo "#provided by $(6):" >> $(2)/etc/modules.d/$(3)$(1)
+)
+	($(foreach mod,$(5), \
+	echo "$(mod)$(if $(MODPARAMS.$(mod)), $(MODPARAMS.$(mod)),$(if $(MODPARAMS), $(MODPARAMS)))"; \
+) ) > $(2)/etc/modules.d/$(3)$(1)
+$(if $(4),
+	mkdir -p $(2)/etc/modules-boot.d
+	ln -sf ../modules.d/$(3)$(1) $(2)/etc/modules-boot.d/
+)
+)
 endef
 
 ifeq ($(DUMP)$(TARGET_BUILD),)
@@ -200,6 +208,7 @@ define KernelPackage/depends
   endef
 endef
 
+# do not use FILE_MODULE_NAME anyway....
 define KernelPackage
   NAME:=$(1)
   $(eval $(call Package/Default))
@@ -246,7 +255,7 @@ $(call KernelPackage/$(1)/config)
     define Package/kmod-$(1)/install
 		  @for mod in $$(call version_filter,$$(FILES)); do \
 			if grep -q "$$$$$$$${mod##$(LINUX_DIR)/}" "$(LINUX_DIR)/modules.builtin"; then \
-				echo "NOTICE: module '$$$$$$$$mod' is built-in."; \
+				echo "NOTICE: module '$$$$$$$$mod' is built-in." >&2; \
 			elif [ -e $$$$$$$$mod ]; then \
 				mkdir -p $$(1)/$(MODULES_SUBDIR) ; \
 				$(CP) -L $$$$$$$$mod $$(1)/$(MODULES_SUBDIR)/ ; \
@@ -255,9 +264,19 @@ $(call KernelPackage/$(1)/config)
 				exit 1; \
 			fi; \
 		  done;
-		  $(call ModuleAutoLoad,$(1),$$(1),$(filter-out 0-,$(word 1,$(AUTOLOAD))-),$(filter-out 0,$(word 2,$(AUTOLOAD))),$(sort $(wordlist 3,99,$(AUTOLOAD))))
+		  $(if $(FILE_MODULE_NAME),, \
+		  	$(call ModuleAutoLoad,$(1),$$(1),$(filter-out 0-,$(word 1,$(AUTOLOAD))-),$(filter-out 0,$(word 2,$(AUTOLOAD))),$(sort $(wordlist 3,99,$(AUTOLOAD)))) \
+		  )
 		  $(call KernelPackage/$(1)/install,$$(1))
     endef
+	ifneq ($(FILE_MODULE_NAME),)
+define Package/kmod-$(1)/postinst
+#!/bin/sh
+[ -n "$$$${IPKG_INSTROOT}" ] && exit 0
+$(call ModuleAutoLoad,$(FILE_MODULE_NAME),,$(filter-out 0-,$(word 1,$(AUTOLOAD))-),$(filter-out 0,$(word 2,$(AUTOLOAD))),$(sort $(wordlist 3,99,$(AUTOLOAD))),$$(1))
+
+endef
+	endif
   $(if $(CONFIG_PACKAGE_kmod-$(1)),
     else
       compile: $(1)-disabled
