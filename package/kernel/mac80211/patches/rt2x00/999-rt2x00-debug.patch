@@ -1,0 +1,146 @@
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -1814,6 +1814,8 @@ int rt2800_config_shared_key(struct rt2x
+ 	u32 offset;
+ 	u32 reg;
+ 
++	rt2x00_info(rt2x00dev, "rt2800_config_shared_key");
++
+ 	if (crypto->cmd == SET_KEY) {
+ 		key->hw_key_idx = (4 * crypto->bssidx) + key->keyidx;
+ 
+@@ -1865,6 +1867,8 @@ int rt2800_config_pairwise_key(struct rt
+ 	struct hw_key_entry key_entry;
+ 	u32 offset;
+ 
++	rt2x00_info(rt2x00dev, "rt2800_config_pairwise_key");
++
+ 	if (crypto->cmd == SET_KEY) {
+ 		/*
+ 		 * Allow key configuration only for STAs that are
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800soc.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800soc.c
+@@ -284,6 +284,7 @@ static int rt2x00soc_probe(struct platfo
+ 	u32 *rf;
+ 	int irq;
+ 
++	pr_info("rt2800soc: rt2x00soc_probe: start\n");
+ 	mem = devm_platform_ioremap_resource(pdev, 0);
+ 	if (IS_ERR(mem))
+ 		return PTR_ERR(mem);
+@@ -343,11 +344,14 @@ static int rt2x00soc_probe(struct platfo
+ 			rt2x00dev->pins_pa_gpio = NULL;
+ 	}
+ 
++	pr_info("rt2800soc: rt2x00soc_probe: done\n");
+ 	return 0;
+ 
+ exit_free_device:
+ 	ieee80211_free_hw(hw);
+ 
++	pr_info("rt2800soc: rt2x00soc_probe: error %d\n", retval);
++
+ 	return retval;
+ }
+ 
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c
+@@ -1209,6 +1209,7 @@ static int rt2x00lib_probe_hw(struct rt2
+ 	if (status)
+ 		return status;
+ 
++	pr_info("rt2x00lib_probe_hw: ieee80211_register_hw done, Status: %d\n", status);
+ 	set_bit(DEVICE_STATE_REGISTERED_HW, &rt2x00dev->flags);
+ 
+ 	return 0;
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00eeprom.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00eeprom.c
+@@ -203,19 +203,24 @@ int rt2x00lib_read_eeprom(struct rt2x00_
+ 	int ret;
+ 
+ 	ret = rt2800lib_read_eeprom_data(rt2x00dev);
++	rt2x00_info(rt2x00dev, "rt2800lib_read_eeprom_data: res=%d", ret);
+ 	if (!ret)
+ 		return 0;
+ 
+ #if IS_ENABLED(CONFIG_MTD)
+ 	ret = rt2800lib_read_eeprom_mtd(rt2x00dev);
++	rt2x00_info(rt2x00dev, "rt2800lib_read_eeprom_mtd: res=%d", ret);
+ 	if (!ret)
+ 		return 0;
+ #endif
+ 
+ 	ret = rt2800lib_read_eeprom_nvmem(rt2x00dev);
++	rt2x00_info(rt2x00dev, "rt2800lib_read_eeprom_nvmem: res=%d", ret);
+ 	if (!ret)
+ 		return 0;
+ 
+-	return rt2x00lib_read_eeprom_file(rt2x00dev);
++	ret = rt2x00lib_read_eeprom_file(rt2x00dev);
++	rt2x00_info(rt2x00dev, "rt2x00lib_read_eeprom_file: res=%d", ret);
++	return ret;
+ }
+ EXPORT_SYMBOL_GPL(rt2x00lib_read_eeprom);
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c
+@@ -464,6 +464,8 @@ int rt2x00mac_set_key(struct ieee80211_h
+ 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, };
+ 	struct rt2x00_sta *sta_priv = NULL;
+ 
++	rt2x00_info(rt2x00dev, "rt2x00mac_set_key");
++
+ 	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+ 		return 0;
+ 
+--- a/net/mac80211/aead_api.c
++++ b/net/mac80211/aead_api.c
+@@ -87,15 +87,21 @@ aead_key_setup_encrypt(const char *alg,
+ 		       size_t key_len, size_t mic_len)
+ {
+ 	struct crypto_aead *tfm;
+-	int err;
++	int err, state = 0;
+ 
++	pr_info("aead_key_setup_encrypt: start");
+ 	tfm = crypto_alloc_aead(alg, 0, CRYPTO_ALG_ASYNC);
+ 	if (IS_ERR(tfm))
++	{
++		pr_warn("aead_key_setup_encrypt: crypto_alloc_aead failed with %d", *(int*)tfm);
+ 		return tfm;
++	}
++	pr_info("aead_key_setup_encrypt: crypto_alloc_aead done");
+ 
+ 	err = crypto_aead_setkey(tfm, key, key_len);
+ 	if (err)
+ 		goto free_aead;
++	state++;
+ 	err = crypto_aead_setauthsize(tfm, mic_len);
+ 	if (err)
+ 		goto free_aead;
+@@ -104,6 +110,7 @@ aead_key_setup_encrypt(const char *alg,
+ 
+ free_aead:
+ 	crypto_free_aead(tfm);
++	pr_warn("aead_key_setup_encrypt: error %d, state=%d", err, state);
+ 	return ERR_PTR(err);
+ }
+ 
+--- a/net/mac80211/key.c
++++ b/net/mac80211/key.c
+@@ -597,12 +597,15 @@ ieee80211_key_alloc(u32 cipher, int idx,
+ 	struct ieee80211_key *key;
+ 	int i, j, err;
+ 
++	u32 size;
+ 	if (WARN_ON(idx < 0 ||
+ 		    idx >= NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS +
+ 		    NUM_DEFAULT_BEACON_KEYS))
+ 		return ERR_PTR(-EINVAL);
+ 
+-	key = kzalloc(sizeof(struct ieee80211_key) + key_len, GFP_KERNEL);
++	size = sizeof(struct ieee80211_key) + key_len;
++	key = kzalloc(size, GFP_KERNEL);
++	pr_info("ieee80211_key_alloc: allocated '%u' bytes for cipher %u\n", size, cipher);
+ 	if (!key)
+ 		return ERR_PTR(-ENOMEM);
+ 

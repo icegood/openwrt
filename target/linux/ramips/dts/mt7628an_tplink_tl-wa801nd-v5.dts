@@ -79,6 +79,16 @@
 				"uart1", "wdt", "wled_an";
 		function = "gpio";
 	};
+
+	lna {
+		groups = "uart1";
+		function = "sw_r";
+	};
+
+	pa {
+		groups = "i2s";
+		function = "antenna";
+	};
 };
 
 &wmac {
