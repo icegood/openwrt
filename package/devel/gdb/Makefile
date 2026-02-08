@@ -66,7 +66,10 @@ CONFIGURE_ARGS+= \
 	--disable-source-highlight \
 	--without-isl \
 	--without-xxhash \
-	--with-libgmp-prefix=$(STAGING_DIR)/usr
+	--with-libgmp-prefix=$(STAGING_DIR)/usr \
+	--disable-binutils \
+	--disable-gas \
+	--disable-ld
 
 CONFIGURE_VARS+= \
 	ac_cv_search_tgetent="$(TARGET_LDFLAGS) -lncurses -lreadline"
