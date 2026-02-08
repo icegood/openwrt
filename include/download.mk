@@ -247,7 +247,7 @@ define DownloadMethod/rawgit
 	) && \
 	rm -rf $(SUBDIR) && mkdir $(SUBDIR) && \
 	$(TAR) -C $(SUBDIR) -xf $(SUBDIR).tar.git && \
-	(cd $(SUBDIR) && $(if $(filter skip,$(SUBMODULES)),true,git submodule update --init --recursive -- $(SUBMODULES) && \
+	(cd $(SUBDIR) && $(if $(filter skip,$(SUBMODULES)),true,git submodule update --init --recursive  --depth 1 -- $(SUBMODULES) && \
 	rm -rf .git .gitmodules)) && \
 	echo "Packing checkout..." && \
 	$(call dl_tar_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)) && \
