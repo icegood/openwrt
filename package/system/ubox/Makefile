@@ -56,11 +56,12 @@ define Package/getrandom/install
 endef
 
 define Package/ubox/install
-	$(INSTALL_DIR) $(1)/sbin $(1)/usr/sbin $(1)/lib $(1)/usr/bin $(1)/etc
+	$(INSTALL_DIR) $(1)/sbin $(1)/usr/sbin $(1)/lib $(1)/usr/bin $(1)/etc $(1)/lib/upgrade/keep.d/
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{kmodloader,validate_data} $(1)/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libvalidate.so $(1)/lib
 	$(INSTALL_DATA) ./files/modules.conf $(1)/etc/modules.conf
+	$(INSTALL_DATA) ./files/keep $(1)/lib/upgrade/keep.d/ubox
 endef
 
 define Package/logd/install
