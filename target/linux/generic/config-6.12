@@ -481,14 +481,14 @@ CONFIG_ATAGS_PROC=y
 # CONFIG_ATALK is not set
 # CONFIG_ATARI_PARTITION is not set
 # CONFIG_ATA_ACPI is not set
-CONFIG_ATA_BMDMA=y
+# CONFIG_ATA_BMDMA is not set
 # CONFIG_ATA_FORCE is not set
 # CONFIG_ATA_GENERIC is not set
 # CONFIG_ATA_LEDS is not set
 # CONFIG_ATA_NONSTANDARD is not set
 # CONFIG_ATA_OVER_ETH is not set
 # CONFIG_ATA_PIIX is not set
-CONFIG_ATA_SFF=y
+# CONFIG_ATA_SFF is not set
 # CONFIG_ATA_VERBOSE_ERROR is not set
 # CONFIG_ATH10K is not set
 # CONFIG_ATH25 is not set
@@ -5175,7 +5175,7 @@ CONFIG_RELR=y
 # CONFIG_RESET_ZYNQ is not set
 # CONFIG_RFD77402 is not set
 # CONFIG_RFD_FTL is not set
-CONFIG_RFKILL=y
+# CONFIG_RFKILL is not set
 # CONFIG_RFKILL_FULL is not set
 # CONFIG_RFKILL_GPIO is not set
 # CONFIG_RFKILL_INPUT is not set
