@@ -48,7 +48,9 @@ PACKAGE_INSTALL_FILES:= \
 	)
 
 $(curdir)/cleanup: $(TMP_DIR)/.build
-	rm -rf $(STAGING_DIR_ROOT)
+#	rm -rf $(PACKAGE_DIR_ALL)
+#	find $(STAGING_DIR) -mindepth 1 -maxdepth 1 ! -name pkginfo -exec rm -rf {} \;
+#	find $(STAGING_DIR)/pkginfo -mindepth 1 -maxdepth 1 ! -name *.version -exec rm -rf {} \;
 
 $(curdir)/merge:
 	rm -rf $(PACKAGE_DIR_ALL)

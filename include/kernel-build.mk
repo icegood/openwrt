@@ -95,7 +95,7 @@ define BuildKernel
 	$(Kernel/Prepare)
 	touch $$@
 
-  $(KERNEL_BUILD_DIR)/symtab.h: FORCE
+  $(KERNEL_BUILD_DIR)/symtab.h:
 	rm -f $(KERNEL_BUILD_DIR)/symtab.h
 	touch $(KERNEL_BUILD_DIR)/symtab.h
 	+$(KERNEL_MAKE) vmlinux
