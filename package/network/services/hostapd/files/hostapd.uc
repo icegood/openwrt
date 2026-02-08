@@ -204,7 +204,7 @@ function __iface_pending_next(pending, state, ret, data)
 				radio: phydev.radio,
 			});
 			if (err) {
-				hostapd.printf(`Failed to create ${bss.ifname} on phy ${phy}: ${err}`);
+				hostapd.printf(hostapd.MSG_ERROR, `Failed to create ${bss.ifname} on phy ${phy}: ${err}`);
 				return null;
 			}
 		}
@@ -220,7 +220,7 @@ function __iface_pending_next(pending, state, ret, data)
 			if (iface_add(phy, config, phy_status))
 				return "done";
 
-			hostapd.printf(`Failed to bring up phy ${phy} ifname=${bss.ifname} with supplicant provided frequency`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to bring up phy ${phy} ifname=${bss.ifname} with supplicant provided frequency`);
 		}
 		pending.call("wpa_supplicant", "phy_set_state", {
 			phy: phydev.phy,
@@ -230,7 +230,7 @@ function __iface_pending_next(pending, state, ret, data)
 		return "wpas_stopped";
 	case "wpas_stopped":
 		if (!iface_add(phy, config))
-			hostapd.printf(`hostapd.add_iface failed for phy ${phy} ifname=${bss.ifname}`);
+			hostapd.printf(hostapd.MSG_ERROR, `hostapd.add_iface failed for phy ${phy} ifname=${bss.ifname}`);
 		pending.call("wpa_supplicant", "phy_set_state", {
 			phy: phydev.phy,
 			radio: phydev.radio ?? -1,
@@ -257,7 +257,7 @@ function iface_pending_next(ret, data)
 				return;
 			}
 		} catch(e) {
-			hostapd.printf(`Exception: ${e}\n${e.stacktrace[0].context}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Exception: ${e}\n${e.stacktrace[0].context}`);
 			return;
 		}
 		pending = !this.defer;
@@ -323,7 +323,7 @@ function iface_restart(phydev, config, old_config)
 	iface_remove(config);
 
 	if (!config.bss || !config.bss[0]) {
-		hostapd.printf(`No bss for phy ${phy}`);
+		hostapd.printf(hostapd.MSG_ERROR, `No bss for phy ${phy}`);
 		return;
 	}
 
@@ -496,19 +496,19 @@ function bss_find_existing(config, prev_config, prev_hash)
 function get_config_bss(name, config, idx)
 {
 	if (!config.bss[idx]) {
-		hostapd.printf(`Invalid bss index ${idx}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Invalid bss index ${idx}`);
 		return;
 	}
 
 	let ifname = config.bss[idx].ifname;
 	if (!ifname) {
-		hostapd.printf(`Could not find bss ${config.bss[idx].ifname}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Could not find bss ${config.bss[idx].ifname}`);
 		return;
 	}
 
 	let if_bss = hostapd.bss[name];
 	if (!if_bss) {
-		hostapd.printf(`Could not find interface ${name} bss list`);
+		hostapd.printf(hostapd.MSG_ERROR, `Could not find interface ${name} bss list`);
 		return;
 	}
 
@@ -534,18 +534,18 @@ function iface_reload_config(name, phydev, config, old_config)
 	let iface = hostapd.interfaces[name];
 	let iface_name = old_config.bss[0].ifname;
 	if (!iface) {
-		hostapd.printf(`Could not find previous interface ${iface_name}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Could not find previous interface ${iface_name}`);
 		return false;
 	}
 
 	if (iface.state() != "ENABLED") {
-		hostapd.printf(`Interface ${iface_name} is not fully configured`);
+		hostapd.printf(hostapd.MSG_WARNING, `Interface ${iface_name} is not fully configured`);
 		return false;
 	}
 
 	let first_bss = get_config_bss(name, old_config, 0);
 	if (!first_bss) {
-		hostapd.printf(`Could not find bss of previous interface ${iface_name}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Could not find bss of previous interface ${iface_name}`);
 		return false;
 	}
 
@@ -661,7 +661,7 @@ function iface_reload_config(name, phydev, config, old_config)
 
 		hostapd.printf(`Rename bss ${old_ifname} to ${new_ifname}`);
 		if (!bss_list[i].rename(new_ifname)) {
-			hostapd.printf(`Failed to rename bss ${old_ifname} to ${new_ifname}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to rename bss ${old_ifname} to ${new_ifname}`);
 			return false;
 		}
 
@@ -672,7 +672,7 @@ function iface_reload_config(name, phydev, config, old_config)
 	for (let i in rename_list) {
 		let new_ifname = config.bss[i].ifname;
 		if (!bss_list[i].rename(new_ifname)) {
-			hostapd.printf(`Failed to rename bss to ${new_ifname}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to rename bss to ${new_ifname}`);
 			return false;
 		}
 		bss_list_cfg[i].ifname = new_ifname;
@@ -703,7 +703,7 @@ function iface_reload_config(name, phydev, config, old_config)
 
 		let addr = phydev.macaddr_next(i);
 		if (!addr) {
-			hostapd.printf(`Failed to generate mac address for phy ${name}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to generate mac address for phy ${name}`);
 			return false;
 		}
 		bsscfg.bssid = addr;
@@ -722,14 +722,14 @@ function iface_reload_config(name, phydev, config, old_config)
 		hostapd.printf(`Add bss ${ifname} on phy ${name}`);
 		bss_list[i] = iface.add_bss(config_inline, i);
 		if (!bss_list[i]) {
-			hostapd.printf(`Failed to add new bss ${ifname} on phy ${name}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to add new bss ${ifname} on phy ${name}`);
 			return false;
 		}
 	}
 
 	// Step 8: update interface bss order
 	if (!iface.set_bss_order(bss_list)) {
-		hostapd.printf(`Failed to update BSS order on phy '${name}'`);
+		hostapd.printf(hostapd.MSG_ERROR, `Failed to update BSS order on phy '${name}'`);
 		return false;
 	}
 
@@ -748,7 +748,7 @@ function iface_reload_config(name, phydev, config, old_config)
 		             bss_remove_file_fields(bss_list_cfg[i]))) {
 			hostapd.printf(`Update config data files for bss ${ifname}`);
 			if (bss.set_config(config_inline, i, true) < 0) {
-				hostapd.printf(`Could not update config data files for bss ${ifname}`);
+				hostapd.printf(hostapd.MSG_ERROR, `Could not update config data files for bss ${ifname}`);
 				return false;
 			} else {
 				bss.ctrl("RELOAD_WPA_PSK");
@@ -763,7 +763,7 @@ function iface_reload_config(name, phydev, config, old_config)
 
 		hostapd.printf(`Reload config for bss '${config.bss[0].ifname}' on phy '${name}'`);
 		if (bss.set_config(config_inline, i) < 0) {
-			hostapd.printf(`Failed to set config for bss ${ifname}`);
+			hostapd.printf(hostapd.MSG_ERROR, `Failed to set config for bss ${ifname}`);
 			return false;
 		}
 	}
@@ -797,7 +797,7 @@ function bss_check_mld(phydev, iface_name, bss)
 	});
 	wdev_set_up(bss.ifname, true);
 	if (err) {
-		hostapd.printf(`Failed to create MLD ${bss.ifname} on phy ${phydev.name}: ${err}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Failed to create MLD ${bss.ifname} on phy ${phydev.name}: ${err}`);
 		delete mld_data.iface[iface_name];
 		return;
 	}
@@ -850,7 +850,7 @@ function iface_set_config(name, config)
 	let phy = config.phy;
 	let phydev = phy_open(phy, config.radio_idx);
 	if (!phydev) {
-		hostapd.printf(`Failed to open phy ${phy}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Failed to open phy ${phy}`);
 		return false;
 	}
 
@@ -867,7 +867,7 @@ function iface_set_config(name, config)
 			return 0;
 		}
 	} catch (e) {
-		hostapd.printf(`Error reloading config: ${e}\n${e.stacktrace[0].context}`);
+		hostapd.printf(hostapd.MSG_ERROR, `Error reloading config: ${e}\n${e.stacktrace[0].context}`);
 	}
 
 	hostapd.printf(`Restart interface for phy ${name}`);
@@ -1124,8 +1124,10 @@ function mld_set_config(config)
 		return;
 
 	hostapd.printf(`Reload all interfaces`);
-	for (let name in hostapd.data.config)
+	for (let name in hostapd.data.config) {
 		mld_reload_interface(name);
+		hostapd.printf(`Reloading interface ${name} done`);
+	}
 }
 
 let main_obj = {
@@ -1253,6 +1255,7 @@ let main_obj = {
 			if (!req.args.config)
 				return libubus.STATUS_INVALID_ARGUMENT;
 
+			hostapd.printf(`hostapd: mld_set: set config to ${req.args.config}`);
 			mld_set_config(req.args.config);
 
 			return {
@@ -1264,8 +1267,10 @@ let main_obj = {
 		args: {
 		},
 		call: function(req) {
-			for (let name in hostapd.data.config)
+			for (let name in hostapd.data.config) {
 				iface_set_config(name);
+				hostapd.printf(`config_reset: set config for ${name}`);
+			}
 			mld_set_config({});
 			return 0;
 		}
@@ -1302,9 +1307,12 @@ let main_obj = {
 			if (hostapd.data.auth_obj)
 				hostapd.data.auth_obj.notify("reload", { phy, radio });
 
-			return {
+			let res = {
 				pid: hostapd.getpid()
 			};
+
+			hostapd.printf(`config_set: return ${res}`);
+			return res;
 		}
 	},
 	config_add: {

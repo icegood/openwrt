@@ -224,7 +224,7 @@ function mld_set_config(config)
 	let phy_list = {};
 	let new_config = !length(prev_mld);
 
-	wpas.printf(`Set MLD config: ${keys(config)}`);
+	wpas.printf(`Supplicant: Set MLD config: ${keys(config)}`);
 
 	for (let name, data in config) {
 		let prev = prev_mld[name];
@@ -521,6 +521,7 @@ let main_obj = {
 				return libubus.STATUS_INVALID_ARGUMENT;
 
 			wpas.data.mld_pending = true;
+			wpas.printf(`wpa_supplicant: mld_set: set config to ${req.args.config}`);
 			mld_set_config(req.args.config);
 			return 0;
 		}
