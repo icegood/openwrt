@@ -27,3 +27,5 @@ pi_jffs2_mount_success=false
 pi_failsafe_net_message=false
 
 boot_run_hook preinit_main
+
+#echo 4 > /tmp/debug_level

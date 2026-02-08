@@ -8,6 +8,37 @@ initscript=$1
 action=${2:-help}
 shift 2
 
+
+# Generic debounce function for OpenWrt
+# Usage: debounce_action <tag> <delay_s> <function_name> [args...]
+debounce_action() {
+	local tag="$1"
+	local delay="$2"
+	shift 2
+	local action="$1"
+	shift
+	local pidfile="/var/run/debounce_${tag}.pid"
+
+	if [ -f "$pidfile" ]; then
+		local old_pid=$(cat "$pidfile")
+		if [ -n "$old_pid" ]; then
+			logger  -t $tag "debounce_action - killing $old_pid"
+			kill "$old_pid" 2>/dev/null
+		fi
+	fi
+
+	(
+		logger -t $tag "debounce_action - waiting in: $$"
+		sleep ${delay}s
+		logger  -t $tag "debounce_action - executing in: $$"
+		"$action" "$@"
+		
+		rm -f "$pidfile"
+	) &
+
+	echo $! > "$pidfile"
+}
+
 start() {
 	return 0
 }
@@ -17,7 +48,7 @@ stop() {
 }
 
 reload() {
-	restart
+	debounce_action "$initscript" 2 restart "$@"
 }
 
 restart() {
