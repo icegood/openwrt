@@ -17,13 +17,6 @@ endif
 # The limitation of flash sysupgrade.bin is 1MB dtb + 16MB kernel + 32MB rootfs
 LS_SYSUPGRADE_IMAGE_SIZE = 49m
 
-define Image/Prepare
-	# Build .dtb for all boards we may run on
-	$(foreach dts,$(DEVICE_DTS_LIST),
-		$(call Image/BuildDTB,$(DTS_DIR)/$(dts).dts,$(DTS_DIR)/$(dts).dtb)
-	)
-endef
-
 define Build/ls-clean
 	rm -f $@
 endef

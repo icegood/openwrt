@@ -256,6 +256,7 @@ endef
 # $(3) extra CPP flags
 # $(4) extra DTC flags
 define Image/BuildDTB/sub
+	echo "Build .dtb for: $(1)"
 	$(TARGET_CROSS)cpp -nostdinc -x assembler-with-cpp \
 		$(DTS_CPPFLAGS) \
 		-I$(DTS_DIR) \
@@ -730,6 +731,7 @@ define Device/Build/compile
 endef
 
 ifndef IB
+
 define Device/Build/dtb
   ifndef BUILD_DTS_$(1)
   BUILD_DTS_$(1) := 1
@@ -738,7 +740,6 @@ define Device/Build/dtb
 
   compile-dtb: $(KDIR)/image-$(1).dtb
   endif
-
 endef
 
 define Device/Build/dtbo
@@ -749,24 +750,24 @@ define Device/Build/dtbo
 
   compile-dtb: $(KDIR)/image-$(1).dtbo
   endif
-
 endef
+
 endif
 
 define Device/Build/kernel
+ifneq ($$(call DEVICE_CHECK_PROFILE,DEVICE_$(1)),)
   $$(eval $$(foreach dts,$$(DEVICE_DTS), \
-	$$(call Device/Build/dtb,$$(notdir $$(dts)), \
-		$$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), \
-		$$(dts) \
-	) \
-  ))
-  $$(eval $$(foreach dtso,$$(DEVICE_DTS_OVERLAY), \
-	$$(call Device/Build/dtbo,$$(notdir $$(dtso)), \
-		$$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), \
-		$$(dtso) \
-	) \
-  ))
+      $$(call Device/Build/dtb,$$(notdir $$(dts)), \
+      $$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), $$(dts))))
 
+  $$(eval $$(foreach dtso,$$(DEVICE_DTS_OVERLAY), \
+      $$(call Device/Build/dtbo,$$(notdir $$(dtso)), \
+      $$(if $$(DEVICE_DTS_DIR),$$(DEVICE_DTS_DIR),$$(DTS_DIR)), $$(dtso))))
+  
+  $$(eval $$(foreach dts,$$(DEVICE_DTS_ADDITIONALS),\
+      $$(call Device/Build/dtb,$$(notdir $$(dts)),\
+      $$(DTS_DIR),$$(dts))))
+endif
   $(KDIR)/$$(KERNEL_NAME):: image_prepare
   $$(_TARGET): $$(if $$(KERNEL_INSTALL),$(BIN_DIR)/$$(KERNEL_IMAGE))
   $(call Device/Export,$$(KDIR_KERNEL_IMAGE),$(1))
