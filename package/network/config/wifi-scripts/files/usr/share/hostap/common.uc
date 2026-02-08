@@ -49,6 +49,8 @@ function __phy_is_fullmac(phyidx)
 {
 	let data = nl80211.request(nl80211.const.NL80211_CMD_GET_WIPHY, 0, { wiphy: phyidx });
 
+	if (!data)
+		return false;
 	return !data.software_iftypes.monitor;
 }
 

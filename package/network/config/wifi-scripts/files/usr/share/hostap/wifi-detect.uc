@@ -1,6 +1,6 @@
 #!/usr/bin/env ucode
 'use strict';
-import { readfile, writefile, realpath, glob, basename, unlink, open, rename } from "fs";
+import { readfile, realpath, glob, basename, unlink, open, rename } from "fs";
 import { is_equal } from "/usr/share/hostap/common.uc";
 let nl = require("nl80211");
 

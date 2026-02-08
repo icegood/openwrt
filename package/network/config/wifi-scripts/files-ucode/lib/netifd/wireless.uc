@@ -139,13 +139,19 @@ function config_init(uci)
 			list[name] = data;
 	}
 
+	netifd.log(netifd.L_DEBUG,`wireless.uc: config_init. sections=${sections}`);
+
 	for (let name, data in sections.device) {
-		if (!data.type)
+		if (!data.type) {
+			netifd.log(netifd.L_ERROR,`wireless.uc: config_init. No type for ${name}`);
 			continue;
+		}
 
 		let handler = wireless.handlers[data.type];
-		if (!handler)
+		if (!handler) {
+			netifd.log(netifd.L_ERROR,`wireless.uc: config_init. No handler for ${name}(${data.type})`);
 			continue;
+		}
 
 		if (data.radio != null)
 			radio_idx[name] = +data.radio;
@@ -347,30 +353,36 @@ function config_init(uci)
 			}
 		}
 	}
-
+	netifd.log(netifd.L_DEBUG,`wireless.uc.config_init done: ${devices}`);
 	update_config(devices, mlo_vifs);
 }
 
 function config_start()
-{
+	{
+	netifd.log(netifd.L_DEBUG,`wireless.uc.config_start`);
 	for (let name, dev in wireless.devices)
 		if (dev.autostart)
 			dev.start();
+	netifd.log(netifd.L_DEBUG,`wireless.uc.config_start done`);
 
 }
 
 function check_interfaces()
 {
+	netifd.log(netifd.L_DEBUG,`wireless.uc.check_interfaces`);
 	for (let name, dev in wireless.devices)
 		if (dev.autostart)
 			dev.check();
+	netifd.log(netifd.L_DEBUG,`wireless.uc.check_interfaces done`);
 }
 
 function hotplug(ifname, add)
 {
+	netifd.log(netifd.L_DEBUG,`wireless.uc.hotplug: ${ifname} ${add}`);
 	for (let name, dev in wireless.devices)
 		if (dev.autostart)
 			dev.hotplug(ifname, add);
+	netifd.log(netifd.L_DEBUG,`wireless.uc.hotplug done: ${ifname} ${add}`);
 }
 
 const network_config_attr = {
@@ -414,11 +426,14 @@ const wdev_args = {
 
 function wdev_call(req, cb)
 {
+	netifd.log(netifd.L_DEBUG,`wireless.uc.wdev_call(${req.args})`);
 	let dev = req.args.device;
 	if (dev) {
 		dev = wireless.devices[dev];
-		if (!dev)
+		if (!dev) {
+			netifd.log(netifd.L_WARNING,`wireless.uc.wdev_call: device ${req.args.device} not found`);
 			return ubus.STATUS_NOT_FOUND;
+		}
 
 		return cb(dev);
 	}
@@ -568,6 +583,7 @@ handler_load(wireless.path, (script, data) => {
 		let validate = handler[kind + "_validate"] = {};
 		handler[kind] = handler_attributes(data[kind], attr, validate);
 	}
+	netifd.log(netifd.L_DEBUG,`wireless.uc.handler loaded(${data.name})`);
 });
 
 wireless.obj = ubus.publish("network.wireless", ubus_obj);
@@ -578,9 +594,11 @@ wireless.listener = ubus.listener("ubus.object.add", (event, msg) => {
 		supplicant_update_mlo();
 });
 
+
 return {
 	hotplug,
 	config_init,
 	config_start,
 	check_interfaces,
 };
+

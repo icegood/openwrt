@@ -4,7 +4,7 @@ import * as libubus from 'ubus';
 import * as nl80211 from 'nl80211';
 import * as fs from 'fs';
 
-global.ubus = libubus.connect();
+global.ubus = libubus.connect(null, 120);
 
 let config_data = '';
 let network_data = '';

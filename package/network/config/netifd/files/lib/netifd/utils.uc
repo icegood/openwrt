@@ -43,19 +43,42 @@ function __type_parsers()
 }
 export const type_parser = __type_parsers();
 
+function safe_system_call(command) {
+	let fout = mkstemp();
+	let ferr = mkstemp();
+
+	let ret = system(`${command} 1>&${fout.fileno()} 2>&${ferr.fileno()}`);
+
+	ferr.seek();
+	let err = ferr.read("all");
+	ferr.close();
+	fout.seek();
+	let out = fout.read("all");
+	fout.close();
+	return {
+		out: out,
+		err: err,
+		ret: ret
+	};
+};
+
 export function handler_load(path, cb)
 {
 	for (let script in glob(path + "/*.sh")) {
 		script = basename(script);
+		netifd.log(netifd.L_DEBUG,`To load ${script} in handler`);
 
-		let f = mkstemp();
+		
 		let prev_dir = realpath(".");
 		chdir(path);
-		system(`./${script} "" "dump" >&${f.fileno()}`);
+		let res = safe_system_call(`./${script} "" "dump"`);
 		chdir(prev_dir);
-		f.seek();
-		while (!f.error()) {
-			let data = trim(f.read("line"));
+		
+		if (res.ret) {
+			netifd.log(netifd.L_WARNING,`Cannot load ${script}: ret=${res.ret}, err=${res.err}`);
+			continue;
+		}
+		for (let data in map(split(res.out, '\n'), (v) => trim(v))) {
 			try {
 				data = json(data);
 			} catch (e) {
@@ -67,7 +90,6 @@ export function handler_load(path, cb)
 
 			cb(script, data);
 		}
-		f.close();
 	}
 };
 

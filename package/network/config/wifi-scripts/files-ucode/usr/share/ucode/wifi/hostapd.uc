@@ -2,7 +2,7 @@
 
 import {
 	append, append_raw, append_vars, dump_config, flush_config, set_default,
-	wiphy_info, wiphy_band
+	wiphy_info, wiphy_band, log
 } from 'wifi.common';
 import { validate } from 'wifi.validate';
 import * as netifd from 'wifi.netifd';
@@ -58,9 +58,9 @@ function device_log_append(config) {
 	}
 
 	append('logger_syslog', log_mask);
-	append('logger_syslog_level', config.log_level);
+	append('logger_syslog_level', config.logger_syslog_level);
 	append('logger_stdout', log_mask);
-	append('logger_stdout_level', config.log_level);
+	append('logger_stdout_level', config.logger_stdout_level);
 }
 
 /* setup country code */
@@ -553,6 +553,7 @@ function setup_interface(interface, data, config, vlans, stas, phy_features, fix
 export function setup(data) {
 	let file_name = `/var/run/hostapd-${data.phy}${data.vif_phy_suffix}.conf`;
 
+	log(`hostapd.setup`);
 	flush_config();
 
 	if (fs.stat(file_name))
@@ -595,8 +596,11 @@ export function setup(data) {
 		system('ubus wait_for hostapd');
 	let ret = global.ubus.call('hostapd', 'config_set', msg);
 
-	if (ret)
+	if (ret) {
 		netifd.add_process('/usr/sbin/hostapd', ret.pid, true, true);
-	else
-		netifd.setup_failed('HOSTAPD_START_FAILED');
+		log(`hostapd.config_set pid=${ret.pid}`);
+	} else {
+		let err = global.ubus.error(false);
+		netifd.setup_failed(`HOSTAPD_START_FAILED, err=${err}`);
+	}
 };

@@ -10,12 +10,18 @@ const NOTIFY_CMD_PROCESS_ADD = 2;
 const NOTIFY_CMD_SET_RETRY = 4;
 
 const DEFAULT_RETRY = 3;
-const DEFAULT_SCRIPT_TIMEOUT = 30 * 1000;
+const DEFAULT_SCRIPT_TIMEOUT = 300 * 1000;
 
 let wdev_cur;
 let wdev_handler = {};
 let wdev_script_task, wdev_script_timeout;
 let handler_timer;
+
+function dbg(msg, lvl)
+{
+	lvl = lvl || netifd.L_DEBUG;
+	netifd.log(lvl, `wdev: ${this !== null ? this.name : "<undef>"}: ${msg}\n`);
+}
 
 function wireless_config_done()
 {
@@ -35,6 +41,7 @@ function wireless_config_done()
 			data: {},
 		},
 	});
+	dbg("wireless_config_done finish");
 }
 
 function delete_wdev(name)
@@ -86,6 +93,9 @@ function wdev_config_init(wdev)
 	let data = wdev.data;
 	let config = data.config;
 	let interfaces = {};
+
+
+	dbg(`wdev_config_init: ${config}`);
 
 	let vif_idx = 0;
 	for (let vif in data.vif) {
@@ -193,6 +203,7 @@ function run_handler_cb(wdev, cb)
 
 function run_handler_timeout(wdev, cb)
 {
+	wdev.dbg(`timeout for ${wdev} op: ${wdev.op}`, netifd.L_WARNING);
 	wdev_script_task.cancel();
 	run_handler_cb(wdev, cb);
 }
@@ -229,8 +240,10 @@ function __run_next_handler()
 		log_prefix: wdev.name,
 	});
 
-	if (!wdev_script_task)
+	if (!wdev_script_task) {
+		wdev.dbg("run " + op + " fallback to sync way");
 		return run_handler_cb(wdev, cb);
+	}
 
 	wdev_script_timeout = uloop.timer(DEFAULT_SCRIPT_TIMEOUT,
 		() => run_handler_timeout(wdev, cb)
@@ -272,7 +285,7 @@ function __wdev_proc_check(wdev, proc)
 	if (netifd.process_check(proc.pid, proc.exe))
 		return;
 
-	wdev.dbg(`process ${proc.exe}(${proc.pid}) no longer active`);
+	wdev.dbg(`process ${proc.exe}(${proc.pid}) no longer active`, netifd.L_WARNING);
 	wdev.teardown();
 	return true;
 }
@@ -615,11 +628,6 @@ function destroy()
 	}
 
 	delete_wdev(this.data.name);
-}
-
-function dbg(msg)
-{
-	netifd.log(netifd.L_DEBUG, `wireless: ${this.name}: ${msg}\n`);
 }
 
 const wdev_proto = {

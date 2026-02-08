@@ -440,13 +440,6 @@
 			"type": "boolean",
 			"default": true
 		},
-		"log_level": {
-			"description": "Log severity",
-			"type": "number",
-			"default": 2,
-			"minimum": 0,
-			"maximum": 4
-		},
 		"log_mlme": {
 			"description": "Enable MLME logging",
 			"type": "boolean",
@@ -462,22 +455,12 @@
 			"type": "boolean",
 			"default": true
 		},
-		"logger_stdout": {
-			"description": "Log to stdout",
-			"type": "boolean",
-			"default": true
-		},
 		"logger_stdout_level": {
 			"description": "Log severity",
 			"type": "number",
 			"default": 2,
 			"minimum": 0,
 			"maximum": 4
-		},
-		"logger_syslog": {
-			"description": "Log to syslog",
-			"type": "boolean",
-			"default": true
 		},
 		"logger_syslog_level": {
 			"description": "Syslog severity",

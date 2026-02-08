@@ -35,8 +35,11 @@ function reset_config(phy, radio) {
 	let name = phy + phy_suffix(radio, ".");
 	let prev_config = `/var/run/hostapd-${name}.conf`;
 
-	global.ubus.call('hostapd', 'config_set', { phy, radio, config: '', prev_config });
-	global.ubus.call('wpa_supplicant', 'config_set', { phy, radio, config: []});
+	log(`reset_config`);
+	if (fs.access('/usr/sbin/hostapd', 'x'))
+		global.ubus.call('hostapd', 'config_set', { phy, radio, config: '', prev_config });
+	if (fs.access('/usr/sbin/wpa_supplicant', 'x'))
+		global.ubus.call('wpa_supplicant', 'config_set', { phy, radio, config: []});
 
 	name = phy + phy_suffix(radio, ":");
 	system(`ucode /usr/share/hostap/wdev.uc ${name} set_config '{}'`);
@@ -83,8 +86,8 @@ function setup_phy(phy, config, data) {
 	if (config.rxantenna == 'all')
 		config.rxantenna = 0xffffffff;
 
-	if (config.txantenna != data?.txantenna || config.rxantenna != data?.rxantenna)
-		reset_config(phy, config.radio);
+	// if (config.txantenna != data?.txantenna || config.rxantenna != data?.rxantenna)
+	//	reset_config(phy, config.radio);
 
 	netifd.set_data({
 		phy,
@@ -160,6 +163,7 @@ function config_add_mesh_params(config, data) {
 function setup() {
 	let data = json(ARGV[3]);
 
+	log(`Starting with ${data}`);
 	data.phy = find_phy(data.config, true);
 	if (!data.phy) {
 		log('Bug: PHY is undefined for device');
@@ -172,9 +176,7 @@ function setup() {
 	if (!data.ifname_prefix)
 		data.ifname_prefix = data.phy + data.vif_phy_suffix + "-";
 	let active_ifnames = [];
-
-	log('Starting');
-
+	
 	let config = data.config;
 
 	if (!config.band) {
@@ -297,15 +299,18 @@ function setup() {
 		};
 		system(`ucode /usr/share/hostap/wdev.uc ${data.phy}${data.phy_suffix} set_config '${if_config}'`);
 	}
+	if (system('/etc/init.d/wpad enabled') == 0) {
 
-	if (fs.access('/usr/sbin/wpa_supplicant', 'x'))
-		supplicant.setup(supplicant_data, data);
+		if (fs.access('/usr/sbin/wpa_supplicant', 'x'))
+			supplicant.setup(supplicant_data, data);
 
-	if (fs.access('/usr/sbin/hostapd', 'x'))
-		hostapd.setup(data);
+		if (fs.access('/usr/sbin/hostapd', 'x')) {
+			hostapd.setup(data);
+		}
 
-	if (length(supplicant_data) > 0)
-		supplicant.start(data);
+		if (fs.access('/usr/sbin/wpa_supplicant', 'x') && (length(supplicant_data) > 0))
+			supplicant.start(data);
+	}
 
 	netifd.set_up();
 
