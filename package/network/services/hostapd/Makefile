@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=hostapd
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://w1.fi/hostap.git
+PKG_SOURCE_URL:=$(ICE_GIT)/hostap.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2025-08-26
 PKG_SOURCE_VERSION:=ca266cc24d8705eb1a2a0857ad326e48b1408b20
@@ -164,7 +164,7 @@ define Package/hostapd/Default
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=IEEE 802.1x Authenticator
-  URL:=https://w1.fi/hostapd/
+  URL:=$(ICE_GIT)/hostap.git
   DEPENDS:=$(DRV_DEPENDS) +hostapd-common $(CORE_DEPENDS)
   EXTRA_DEPENDS:=hostapd-common (=$(PKG_VERSION)-r$(PKG_RELEASE))
   USERID:=network=101:network=101
@@ -274,7 +274,7 @@ define Package/wpad/Default
   DEPENDS:=$(DRV_DEPENDS) +hostapd-common $(CORE_DEPENDS)
   EXTRA_DEPENDS:=hostapd-common (=$(PKG_VERSION)-r$(PKG_RELEASE))
   USERID:=network=101:network=101
-  URL:=https://w1.fi/
+  URL:=$(ICE_GIT)/hostap.git
   PROVIDES:=hostapd wpa-supplicant
   CONFLICTS:=$(HOSTAPD_PROVIDERS) $(SUPPLICANT_PROVIDERS)
   HOSTAPD_PROVIDERS+=$(1)
@@ -415,7 +415,7 @@ define Package/wpa-supplicant/Default
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=WPA Supplicant
-  URL:=https://w1.fi/wpa_supplicant/
+  URL:=$(ICE_GIT)/hostap.git
   DEPENDS:=$(DRV_DEPENDS) +hostapd-common $(CORE_DEPENDS)
   EXTRA_DEPENDS:=hostapd-common (=$(PKG_VERSION)-r$(PKG_RELEASE))
   USERID:=network=101:network=101
@@ -513,7 +513,7 @@ define Package/hostapd-utils
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=IEEE 802.1x Authenticator (utils)
-  URL:=https://w1.fi/hostapd/
+  URL:=$(ICE_GIT)/hostap.git
   DEPENDS:=@$(subst $(space),||,$(foreach pkg,$(HOSTAPD_PROVIDERS),PACKAGE_$(pkg)))
   VARIANT:=*
 endef

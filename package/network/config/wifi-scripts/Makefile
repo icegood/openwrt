@@ -23,6 +23,7 @@ define Package/wifi-scripts
   DEPENDS:=+netifd +ucode +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-ubus +ucode-mod-uci +ucode-mod-digest
   TITLE:=Wi-Fi configuration scripts
   PKGARCH:=all
+  ABI_VERSION:=.ice
 endef
 
 define Package/wifi-scripts/config

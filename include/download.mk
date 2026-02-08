@@ -4,6 +4,7 @@
 # Copyright (C) 2016 LEDE project
 
 PROJECT_GIT = https://git.openwrt.org
+ICE_GIT = https://github.com/icegood
 
 OPENWRT_GIT = $(PROJECT_GIT)
 LEDE_GIT = $(PROJECT_GIT)
