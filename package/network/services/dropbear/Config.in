@@ -43,7 +43,8 @@ config DROPBEAR_DEBUG_TRACE
 		* 4 = approx 17 Kb (detailed before connection)
 		* 5 = approx 8 Kb (detailed after connection)
 
-		Debug is enabled with -v at runtime. Repeat to increase.
+		Debug is enabled with -v at runtime provided that drobdear is compiled. 
+		Repeat to increase.
 
 		Default: 0.
 

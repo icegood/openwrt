@@ -269,10 +269,10 @@ define Package/dropbear/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dropbear.init $(1)/etc/init.d/dropbear
 	$(INSTALL_DIR) $(1)/etc/dropbear
+	$(INSTALL_DATA) ./files/authorized_keys $(1)/etc/dropbear/authorized_keys
 	$(INSTALL_DIR) $(1)/lib/preinit
 	$(INSTALL_DATA) ./files/dropbear.failsafe $(1)/lib/preinit/99_10_failsafe_dropbear
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_DATA) ./files/dropbear.defaults $(1)/etc/uci-defaults/50-dropbear
 	$(foreach f,$(filter /etc/dropbear/%,$(Package/dropbear/conffiles)),$(if $(wildcard $(TOPDIR)/files/$(f)),chmod 0600 $(TOPDIR)/files/$(f) || :; ))
 endef
 
