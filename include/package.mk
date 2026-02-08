@@ -66,14 +66,6 @@ include $(INCLUDE_DIR)/prereq.mk
 include $(INCLUDE_DIR)/unpack.mk
 include $(INCLUDE_DIR)/depends.mk
 
-ifneq ($(wildcard $(TOPDIR)/git-src/$(PKG_NAME)/.git),)
-  USE_GIT_SRC_CHECKOUT:=1
-  QUILT:=1
-endif
-ifneq ($(if $(CONFIG_SRC_TREE_OVERRIDE),$(wildcard ./git-src)),)
-  USE_GIT_TREE:=1
-  QUILT:=1
-endif
 ifdef USE_SOURCE_DIR
   QUILT:=1
 endif
@@ -186,39 +178,6 @@ ifeq ($(DUMP)$(filter prereq clean refresh update,$(MAKECMDGOALS)),)
       $(if $(filter prepare,$(MAKECMDGOALS)),,$(call rdep,$(PKG_BUILD_DIR),$(STAMP_BUILT),,-x "*/.dep_*" -x "*/ipkg*"))
     endef
   endif
-endif
-
-ifdef USE_GIT_SRC_CHECKOUT
-  define Build/Prepare/Default
-	mkdir -p $(PKG_BUILD_DIR)
-	ln -s $(TOPDIR)/git-src/$(PKG_NAME)/.git $(PKG_BUILD_DIR)/.git
-	( cd $(PKG_BUILD_DIR); \
-		git checkout .; \
-		git submodule update --recursive; \
-		git submodule foreach git config --unset core.worktree; \
-		git submodule foreach git checkout .; \
-	)
-  endef
-endif
-ifdef USE_GIT_TREE
-  define Build/Prepare/Default
-	mkdir -p $(PKG_BUILD_DIR)
-	ln -s $(CURDIR)/git-src $(PKG_BUILD_DIR)/.git
-	( cd $(PKG_BUILD_DIR); \
-		git checkout .; \
-		git submodule update --recursive; \
-		git submodule foreach git config --unset core.worktree; \
-		git submodule foreach git checkout .; \
-	)
-  endef
-endif
-ifdef USE_SOURCE_DIR
-  define Build/Prepare/Default
-	rm -rf $(PKG_BUILD_DIR)
-	$(if $(wildcard $(USE_SOURCE_DIR)/*),,@echo "Error: USE_SOURCE_DIR=$(USE_SOURCE_DIR) path not found"; false)
-	ln -snf $(USE_SOURCE_DIR) $(PKG_BUILD_DIR)
-	touch $(PKG_BUILD_DIR)/.source_dir
-  endef
 endif
 
 define Build/Exports/Default

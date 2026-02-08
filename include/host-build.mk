@@ -7,6 +7,7 @@ include $(INCLUDE_DIR)/download.mk
 HOST_BUILD_DIR ?= $(BUILD_DIR_HOST)/$(PKG_NAME)$(if $(PKG_VERSION),-$(PKG_VERSION))
 HOST_INSTALL_DIR ?= $(HOST_BUILD_DIR)/host-install
 HOST_BUILD_PARALLEL ?=
+PKG_SKIP_DOWNLOAD=$(USE_SOURCE_DIR)$(USE_GIT_TREE)$(USE_GIT_SRC_CHECKOUT)
 
 HOST_MAKE_J:=$(if $(MAKE_JOBSERVER),$(MAKE_JOBSERVER) $(if $(filter 3.% 4.0 4.1,$(MAKE_VERSION)),-j))
 
@@ -226,9 +227,11 @@ endif
 
 define HostBuild
   $(HostBuild/Core)
-  $(if $(if $(PKG_HOST_ONLY),,$(if $(and $(filter host-%,$(MAKECMDGOALS)),$(PKG_SKIP_DOWNLOAD)),,$(STAMP_PREPARED))),,
-	$(if $(and $(CONFIG_AUTOREMOVE), $(wildcard $(HOST_STAMP_INSTALLED), $(wildcard $(HOST_STAMP_BUILT)))),,
-		$(if $(strip $(PKG_SOURCE_URL)),$(call Download,default))
-	)
+  $(if $(PKG_SKIP_DOWNLOAD),,
+  	$(if $(if $(PKG_HOST_ONLY),,$(if $(filter host-%,$(MAKECMDGOALS)),,$(STAMP_PREPARED))),,
+		$(if $(and $(CONFIG_AUTOREMOVE), $(wildcard $(HOST_STAMP_INSTALLED), $(wildcard $(HOST_STAMP_BUILT)))),,
+			$(if $(strip $(PKG_SOURCE_URL)),$(call Download,default))
+		)
+  	)
   )
 endef

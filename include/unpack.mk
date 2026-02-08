@@ -61,11 +61,63 @@ ifeq ($(strip $(UNPACK_CMD)),)
   endif
 endif
 
-ifdef PKG_BUILD_DIR
-  PKG_UNPACK ?= $(SH_FUNC) $(call UNPACK_CMD,$(PKG_BUILD_DIR))
+define Build/Unpack/Default
+  $(SH_FUNC) $(call UNPACK_CMD,$(1))
+endef
+
+define Build/Unpack/GitCommon
+	mkdir -p $(1)
+	( cd $(1); \
+		ln -sf "$$$$(realpath --relative-to=. "$(2)")" .git; \
+		git checkout .; \
+		git submodule update --recursive --depth 1; \
+		git submodule foreach git config --unset core.worktree; \
+		git submodule foreach git checkout .; \
+	)
+endef
+
+define Build/Unpack/USE_GIT_SRC_CHECKOUT
+	$(call Build/Unpack/GitCommon,$(1),$(TOPDIR)/git-src/$(PKG_NAME)/.git)
+endef
+
+define Build/Unpack/USE_GIT_TREE
+	$(call Build/Unpack/GitCommon,$(1),$(CURDIR)/git-src)
+endef
+
+define Build/Unpack/USE_SOURCE_DIR
+	rm -rf $(1)
+	$(if $(wildcard $(USE_SOURCE_DIR)/*),,@echo "Error: USE_SOURCE_DIR=$(USE_SOURCE_DIR) path not found"; false)
+	ln -snf $(USE_SOURCE_DIR) $(1)
+	touch $(1)/.source_dir
+endef
+
+ifneq ($(wildcard $(TOPDIR)/git-src/$(PKG_NAME)/.git),)
+  USE_GIT_SRC_CHECKOUT:=1
 endif
+ifneq ($(if $(CONFIG_SRC_TREE_OVERRIDE),$(wildcard ./git-src)),)
+  USE_GIT_TREE:=1
+endif
+
+ifdef USE_GIT_SRC_CHECKOUT
+  UNPACK ?= Build/Unpack/USE_GIT_SRC_CHECKOUT
+else ifdef USE_GIT_TREE
+  UNPACK ?= Build/Unpack/USE_GIT_TREE
+else ifdef USE_SOURCE_DIR
+  UNPACK ?= Build/Unpack/USE_SOURCE_DIR
+else
+  UNPACK ?= Build/Unpack/Default
+endif
+
+ifdef PKG_BUILD_DIR
+  PKG_UNPACK=$(call $(UNPACK),$(PKG_BUILD_DIR))
+else
+  PKG_UNPACK=
+endif
+
 ifdef HOST_BUILD_DIR
-  HOST_UNPACK ?= $(SH_FUNC) $(call UNPACK_CMD,$(HOST_BUILD_DIR))
+  HOST_UNPACK=$(call $(UNPACK),$(HOST_BUILD_DIR))
+else
+  HOST_UNPACK=
 endif
 
 endif # PKG_SOURCE
