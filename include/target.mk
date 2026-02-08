@@ -215,7 +215,7 @@ LINUX_RECONF_DIFF = $(SCRIPT_DIR)/kconfig.pl - '>' $(call __linux_confcmd,$(filt
 ifeq ($(DUMP),1)
   BuildTarget=$(BuildTargets/DumpCurrent)
 
-  CPU_CFLAGS = -Os -pipe
+  CPU_CFLAGS = -pipe
   ifneq ($(findstring mips,$(ARCH)),)
     ifneq ($(findstring mips64,$(ARCH)),)
       CPU_TYPE ?= mips64
@@ -273,7 +273,7 @@ ifeq ($(DUMP),1)
   endif
   ifeq ($(ARCH),loongarch64)
     CPU_TYPE ?= generic
-    CPU_CFLAGS := -O2 -pipe
+    CPU_CFLAGS := -pipe
     CPU_CFLAGS_generic:=-march=loongarch64
   endif
   ifneq ($(CPU_TYPE),)
