@@ -74,11 +74,7 @@ endif
 define Package/odhcpd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/odhcpd $(1)/usr/sbin/
-	$(INSTALL_BIN) ./files/odhcpd-update $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/odhcpd.init $(1)/etc/init.d/odhcpd
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files/odhcpd.defaults $(1)/etc/uci-defaults/15_odhcpd
+	$(CP) -a ./files/* $(1)/
 endef
 
 Package/odhcpd-ipv6only/install = $(Package/odhcpd/install)

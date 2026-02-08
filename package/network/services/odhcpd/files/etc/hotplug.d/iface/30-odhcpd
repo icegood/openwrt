@@ -1,0 +1,4 @@
+#!/bin/sh
+
+[ "$ACTION" = ifup -o "$ACTION" = ifupdate ] || exit 0
+/etc/inid.t/odhcpd reload
