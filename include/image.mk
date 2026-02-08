@@ -239,6 +239,7 @@ DTCO_FLAGS += $(DTC_WARN_FLAGS)
 # @param 2: Padding.
 ##
 define Image/pad-to
+	@echo "Image/pad-to dd bs=$(2)" >> $(IMAGE_STAT_FILE)
 	dd if=$(1) of=$(1).new bs=$(2) conv=sync
 	mv $(1).new $(1)
 endef
@@ -311,9 +312,17 @@ $(eval $(foreach S,$(JFFS2_BLOCKSIZE),$(call Image/mkfs/jffs2/template,$(S))))
 $(eval $(foreach S,$(NAND_BLOCKSIZE),$(call Image/mkfs/jffs2-nand/template,$(S))))
 
 define Image/mkfs/squashfs-common
+	@echo -e "squashfs-common exec: $(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX)" >> $(IMAGE_STAT_FILE)
+	@echo -e "squashfs-common src: $(call mkfs_target_dir,$(1))" >> $(IMAGE_STAT_FILE)
+	@echo -e "squashfs-common dest: $@\n" >> $(IMAGE_STAT_FILE)
+	@echo -e "squashfs-common SQUASHFSCOMP: $(SQUASHFSCOMP)\n" >> $(IMAGE_STAT_FILE)
+	@echo -e "squashfs-common SQUASHFSOPT: $(SQUASHFSOPT)\n" >> $(IMAGE_STAT_FILE)
 	$(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX) $(call mkfs_target_dir,$(1)) $@ \
 		-nopad -noappend -root-owned \
-		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT)
+		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
+	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(STAGING_DIR_HOST)/bin/unsquashfs$(SQUASHFEXEC_SUFFIX) -s $@ >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
+	@echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 ifeq ($(CONFIG_TARGET_ROOTFS_SECURITY_LABELS),y)
@@ -1015,7 +1024,7 @@ define BuildImage
     compile-dtb:
     image_prepare: compile compile-dtb
 		mkdir -p $(BIN_DIR) $(KDIR)/tmp
-		rm -rf $(BUILD_DIR)/json_info_files
+		rm -rf $(BUILD_DIR)/json_info_files $(IMAGE_STAT_FILE)
 		$(call Image/Prepare)
 
   else
