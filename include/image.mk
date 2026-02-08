@@ -239,7 +239,7 @@ DTCO_FLAGS += $(DTC_WARN_FLAGS)
 # @param 2: Padding.
 ##
 define Image/pad-to
-	@echo "Image/pad-to dd bs=$(2)" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Image/pad-to dd bs=$(2)" >> $(IMAGE_STAT_FILE)
 	dd if=$(1) of=$(1).new bs=$(2) conv=sync
 	mv $(1).new $(1)
 endef
@@ -312,17 +312,17 @@ $(eval $(foreach S,$(JFFS2_BLOCKSIZE),$(call Image/mkfs/jffs2/template,$(S))))
 $(eval $(foreach S,$(NAND_BLOCKSIZE),$(call Image/mkfs/jffs2-nand/template,$(S))))
 
 define Image/mkfs/squashfs-common
-	@echo -e "squashfs-common exec: $(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX)" >> $(IMAGE_STAT_FILE)
-	@echo -e "squashfs-common src: $(call mkfs_target_dir,$(1))" >> $(IMAGE_STAT_FILE)
-	@echo -e "squashfs-common dest: $@\n" >> $(IMAGE_STAT_FILE)
-	@echo -e "squashfs-common SQUASHFSCOMP: $(SQUASHFSCOMP)\n" >> $(IMAGE_STAT_FILE)
-	@echo -e "squashfs-common SQUASHFSOPT: $(SQUASHFSOPT)\n" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "squashfs-common exec: $(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX)" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "squashfs-common src: $(call mkfs_target_dir,$(1))" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "squashfs-common dest: $@\n" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "squashfs-common SQUASHFSCOMP: $(SQUASHFSCOMP)\n" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "squashfs-common SQUASHFSOPT: $(SQUASHFSOPT)\n" >> $(IMAGE_STAT_FILE)
 	$(STAGING_DIR_HOST)/bin/mksquashfs$(SQUASHFEXEC_SUFFIX) $(call mkfs_target_dir,$(1)) $@ \
 		-nopad -noappend -root-owned \
 		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 	$(STAGING_DIR_HOST)/bin/unsquashfs$(SQUASHFEXEC_SUFFIX) -s $@ >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 ifeq ($(CONFIG_TARGET_ROOTFS_SECURITY_LABELS),y)
@@ -682,13 +682,13 @@ define Device/Build/initramfs
   $(KDIR)/tmp/$$(KERNEL_INITRAMFS_IMAGE): $(KDIR)/$$(KERNEL_INITRAMFS_NAME)$$(strip \
 						$(if $(TARGET_PER_DEVICE_ROOTFS),.$$(ROOTFS_ID/$(1))) \
 					) $(CURDIR)/Makefile $$(KERNEL_DEPENDS) image_prepare
-	@rm -f $$@
+	$(INSTR_QUIET)rm -f $$@
 	$$(call concat_cmd,$$(KERNEL_INITRAMFS))
 
   $(call Device/Export,$(BUILD_DIR)/json_info_files/$$(KERNEL_INITRAMFS_IMAGE).json,$(1))
 
   $(BUILD_DIR)/json_info_files/$$(KERNEL_INITRAMFS_IMAGE).json: $(BIN_DIR)/$$(KERNEL_INITRAMFS_IMAGE)
-	@mkdir -p $$(shell dirname $$@)
+	$(INSTR_QUIET)mkdir -p $$(shell dirname $$@)
 	DEVICE_ID="$(1)" \
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 	FILE_NAME="$$(notdir $$^)" \
@@ -787,7 +787,7 @@ endif
       install: $$(KDIR_KERNEL_IMAGE)
     endif
     $$(KDIR_KERNEL_IMAGE): $(KDIR)/$$(KERNEL_NAME) $(CURDIR)/Makefile $$(KERNEL_DEPENDS) image_prepare
-	@rm -f $$@
+	$(INSTR_QUIET)rm -f $$@
 	$$(call concat_cmd,$$(KERNEL))
 	$$(if $$(KERNEL_SIZE),$$(call Build/check-size,$$(KERNEL_SIZE)))
   endif
@@ -811,7 +811,7 @@ define Device/Build/image
     $$(ROOTFS/$(1)/$(3)): $(if $(TARGET_PER_DEVICE_ROOTFS),target-dir-$$(ROOTFS_ID/$(3)))
   endif
   $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2)): $$(KDIR_KERNEL_IMAGE) $$(ROOTFS/$(1)/$(3)) $(if $(CONFIG_TARGET_ROOTFS_INITRAMFS),$(if $(IB),,$(3)-initramfs-images))
-	@rm -f $$@
+	$(INSTR_QUIET)rm -f $$@
 	[ -f $$(word 1,$$^) -a -f $$(word 2,$$^) ]
 	$$(call concat_cmd,$(if $(IMAGE/$(2)/$(1)),$(IMAGE/$(2)/$(1)),$(IMAGE/$(2))))
 
@@ -824,7 +824,7 @@ define Device/Build/image
 	cp $$^ $$@
 
   $(BUILD_DIR)/json_info_files/$(call DEVICE_IMG_NAME,$(1),$(2)).json: $(BIN_DIR)/$(call DEVICE_IMG_NAME,$(1),$(2))$$(GZ_SUFFIX)
-	@mkdir -p $$(shell dirname $$@)
+	$(INSTR_QUIET)mkdir -p $$(shell dirname $$@)
 	DEVICE_ID="$(DEVICE_NAME)" \
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 	FILE_NAME="$(DEVICE_IMG_NAME)" \
@@ -872,7 +872,7 @@ define Device/Build/artifact
 	  $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(1))
   $(eval $(call Device/Export,$(KDIR)/tmp/$(DEVICE_IMG_PREFIX)-$(1)))
   $(KDIR)/tmp/$(DEVICE_IMG_PREFIX)-$(1): $$(KDIR_KERNEL_IMAGE) $(if $(CONFIG_TARGET_ROOTFS_INITRAMFS),$(if $(IB),,$(2)-initramfs-images)) $(2)-images
-	@rm -f $$@
+	$(INSTR_QUIET)rm -f $$@
 	$$(call concat_cmd,$(ARTIFACT/$(1)))
 
   .IGNORE: $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(1)
@@ -881,7 +881,7 @@ define Device/Build/artifact
 	cp $$^ $$@
 
   $(BUILD_DIR)/json_info_files/$(DEVICE_IMG_PREFIX)-$(1).json: $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-$(1)
-	@mkdir -p $$(shell dirname $$@)
+	$(INSTR_QUIET)mkdir -p $$(shell dirname $$@)
 	DEVICE_ID="$(DEVICE_NAME)" \
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 	FILE_NAME="$(DEVICE_IMG_PREFIX)-$(1)" \
@@ -1003,7 +1003,7 @@ define BuildImage
   ifneq ($(DUMP),)
     all: dumpinfo
     dumpinfo: FORCE
-	@true
+	$(INSTR_QUIET)true
   endif
 
   download:

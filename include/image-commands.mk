@@ -313,7 +313,7 @@ endef
 # $1 - size to check against, if not explicitly added then to check against IMAGE_SIZE
 # if implicit then additionally create stat message on both kernel and ramfs
 define Build/check-size
-	@if [ -z "$(1)" ]; then \
+	$(INSTR_QUIET)if [ -z "$(1)" ]; then \
 		_kernel_size="$(shell stat -c%s $(IMAGE_KERNEL))"; \
 		_image_size="$(shell stat -c%s $(IMAGE_ROOTFS))"; \
 		echo -e "$(IMAGE_KERNEL): $${_kernel_size}" >> $(IMAGE_STAT_FILE); \
@@ -377,7 +377,7 @@ endef
 
 define Build/edimax-header
 	$(STAGING_DIR_HOST)/bin/mkedimaximg -i $@ -o $@.new $(1)
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/elecom-product-header
@@ -468,7 +468,7 @@ define Build/fit-image
 	$(call locked,PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage $(if $(findstring external,$(word 3,$(1))),\
 		-E -B 0x1000 $(if $(findstring static,$(word 3,$(1))),-p 0x1000)) -f $@.its $@.new, \
 	  gen-cpio$(if $(TARGET_PER_DEVICE_ROOTFS),.$(ROOTFS_ID/$(DEVICE_NAME))))
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/fit
@@ -478,21 +478,21 @@ endef
 
 define Build/libdeflate-gzip
 	$(STAGING_DIR_HOST)/bin/libdeflate-gzip -f -12 -c $@ $(1) > $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/gzip
 	$(STAGING_DIR_HOST)/bin/gzip -f -9n -c $@ $(1) > $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/gzip-filename
-	@mkdir -p $@.tmp
-	@cp $@ $@.tmp/$(word 1,$(1))
+	$(INSTR_QUIET)mkdir -p $@.tmp
+	$(INSTR_QUIET)cp $@ $@.tmp/$(word 1,$(1))
 	$(if $(SOURCE_DATE_EPOCH),touch -hcd "@$(SOURCE_DATE_EPOCH)" $@.tmp/$(word 1,$(1)) $(word 2,$(1)))
 	$(STAGING_DIR_HOST)/bin/gzip -f -9 -N -c $@.tmp/$(word 1,$(1)) $(word 2,$(1)) > $@.new
-	@mv $@.new $@
-	@rm -rf $@.tmp
+	$(INSTR_QUIET)mv $@.new $@
+	$(INSTR_QUIET)rm -rf $@.tmp
 endef
 
 define Build/install-dtb
@@ -517,11 +517,11 @@ define Build/iptime-naspkg
 endef
 
 define Build/jffs2
-	@echo "Build/jffs2" >> $(IMAGE_STAT_FILE)
-	@echo "$(STAGING_DIR_HOST)/bin/mkfs.jffs2 --pad " >> $(IMAGE_STAT_FILE)
-	@echo "$(if $(CONFIG_BIG_ENDIAN),--big-endian,--little-endian)" >> $(IMAGE_STAT_FILE)
-	@echo "--squash-uids -v -e $(patsubst %k,%KiB,$(BLOCKSIZE))" >> $(IMAGE_STAT_FILE)
-	@echo "================" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Build/jffs2" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "$(STAGING_DIR_HOST)/bin/mkfs.jffs2 --pad " >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "$(if $(CONFIG_BIG_ENDIAN),--big-endian,--little-endian)" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "--squash-uids -v -e $(patsubst %k,%KiB,$(BLOCKSIZE))" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "================" >> $(IMAGE_STAT_FILE)
 	rm -rf $(KDIR_TMP)/$(DEVICE_NAME)/jffs2 && \
 		mkdir -p $(KDIR_TMP)/$(DEVICE_NAME)/jffs2/$$(dirname $(word 1,$(1))) && \
 		cp $@ $(KDIR_TMP)/$(DEVICE_NAME)/jffs2/$(word 1,$(1)) && \
@@ -534,7 +534,7 @@ define Build/jffs2
 			2>&1 1>/dev/null | awk '/^.+$$$$/' && \
 		$(STAGING_DIR_HOST)/bin/padjffs2 $@.new -J $(patsubst %k,,$(BLOCKSIZE))
 	-rm -rf $(KDIR_TMP)/$(DEVICE_NAME)/jffs2/
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/yaffs-filesystem
@@ -609,7 +609,7 @@ endef
 
 define Build/lzma-no-dict
 	$(STAGING_DIR_HOST)/bin/lzma e $@ $(1) $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/moxa-encode-fw
@@ -681,12 +681,12 @@ define Build/dualboot-datachk-nand-image
 endef
 
 define Build/pad-extra
-	@echo "Build/pad-extra $(1) $@" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Build/pad-extra $(1) $@" >> $(IMAGE_STAT_FILE)
 	dd if=/dev/zero bs=$(1) count=1 >> $@
 endef
 
 define Build/pad-offset
-	@echo "Build/pad-offset $(1)" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Build/pad-offset $(1)" >> $(IMAGE_STAT_FILE)
 	let \
 		size="$$(stat -c%s $@)" \
 		pad="$(call exp_units,$(word 1, $(1)))" \
@@ -698,11 +698,11 @@ define Build/pad-offset
 endef
 
 define Build/pad-rootfs
-	@echo $(STAGING_DIR_HOST)/bin/padjffs2 $@ $(1) \
+	$(INSTR_QUIET)echo $(STAGING_DIR_HOST)/bin/padjffs2 $@ $(1) \
 		$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),4 8 16 64 128 256) >> $(IMAGE_STAT_FILE)
 	$(STAGING_DIR_HOST)/bin/padjffs2 $@ $(1) \
 		$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),4 8 16 64 128 256) 2>> $(IMAGE_STAT_FILE) >> $(IMAGE_STAT_FILE)
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 define Build/pad-to
@@ -728,14 +728,14 @@ define Build/qsdk-ipq-factory-nand
 	$(TOPDIR)/scripts/mkits-qsdk-ipq-image.sh \
 		$@.its ubi $@
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/qsdk-ipq-factory-nor
 	$(TOPDIR)/scripts/mkits-qsdk-ipq-image.sh \
 		$@.its hlos $(IMAGE_KERNEL) rootfs $(IMAGE_ROOTFS)
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 define Build/seama
@@ -791,7 +791,7 @@ define Build/tplink-v1-header
 		-E $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR)) \
 		-m $(TPLINK_HEADER_VERSION) -N "$(VERSION_DIST)" -V $(REVISION) \
 		-k $@ -o $@.new $(1)
-	@mv $@.new $@
+	$(INSTR_QUIET)mv $@.new $@
 endef
 
 # combine kernel and rootfs into one image
@@ -813,43 +813,43 @@ define Build/tplink-v1-image
 endef
 
 define Build/tplink-v2-header
-	@echo "Build/tplink-v2-header" >> $(IMAGE_STAT_FILE)
-	@echo $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
+	$(INSTR_QUIET)echo "Build/tplink-v2-header" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-c -H $(TPLINK_HWID) -W $(TPLINK_HWREV) -L $(KERNEL_LOADADDR) \
 		-E $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR))  \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" \
 		-k $@ -o $@.new $(1) >> $(IMAGE_STAT_FILE)
-	@$(STAGING_DIR_HOST)/bin/mktplinkfw2 \
+	$(INSTR_QUIET)$(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-c -H $(TPLINK_HWID) -W $(TPLINK_HWREV) -L $(KERNEL_LOADADDR) \
 		-E $(if $(KERNEL_ENTRY),$(KERNEL_ENTRY),$(KERNEL_LOADADDR))  \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" \
 		-k $@ -o $@.new $(1) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE) \
 	&& mv $@.new $@ || rm -f $@
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 define Build/tplink-v2-image
-	@echo "Build/tplink-v2-image" >> $(IMAGE_STAT_FILE)
-	@echo $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
+	$(INSTR_QUIET)echo "Build/tplink-v2-image" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo $(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-H $(TPLINK_HWID) -W $(TPLINK_HWREV) \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
 		-k $(IMAGE_KERNEL) -r $(IMAGE_ROOTFS) -o $@.new $(1) >> $(IMAGE_STAT_FILE)
 	echo -e "IMAGE_ADDITIONAL_SIZE: 512 (mktplinkfw2 header)" >> $(IMAGE_STAT_FILE)
-	@$(STAGING_DIR_HOST)/bin/mktplinkfw2 \
+	$(INSTR_QUIET)$(STAGING_DIR_HOST)/bin/mktplinkfw2 \
 		-H $(TPLINK_HWID) -W $(TPLINK_HWREV) \
 		-w $(TPLINK_HWREVADD) -F "$(TPLINK_FLASHLAYOUT)" \
 		-T $(TPLINK_HVERSION) -V "ver. 2.0" -a 0x4 -j$(if $(BLOCKSIZE),$(BLOCKSIZE:%k=%),68) \
 		-k $(IMAGE_KERNEL) -r $(IMAGE_ROOTFS) -o $@.new $(1) >> $(IMAGE_STAT_FILE) 2>> $(IMAGE_STAT_FILE)\
 	&& cat $@.new >> $@ && rm -rf $@.new || rm -f $@
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 endef
 
 define Build/uImage
-	@echo "Build/uImage: $@" >> $(IMAGE_STAT_FILE)
-	@echo "Build/uImage args: $(1)" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Build/uImage: $@" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo "Build/uImage args: $(1)" >> $(IMAGE_STAT_FILE)
 	$(if $(UIMAGE_TIME),SOURCE_DATE_EPOCH="$(UIMAGE_TIME)") \
 	mkimage \
 		-A $(LINUX_KARCH) \
@@ -862,7 +862,7 @@ define Build/uImage
 		$(if $(UIMAGE_MAGIC),-M $(UIMAGE_MAGIC)) \
 		$(wordlist 2,$(words $(1)),$(1)) \
 		-d $@ $@.new >> $(IMAGE_STAT_FILE)
-	@echo -e "=========" >> $(IMAGE_STAT_FILE)
+	$(INSTR_QUIET)echo -e "=========" >> $(IMAGE_STAT_FILE)
 	mv $@.new $@
 endef
 
