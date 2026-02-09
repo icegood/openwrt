@@ -165,7 +165,8 @@ define KernelPackage/nf-flow
   TITLE:=Netfilter flowtable support
   KCONFIG:= \
 	CONFIG_NETFILTER_INGRESS=y \
-	CONFIG_NF_FLOW_TABLE
+	CONFIG_NF_FLOW_TABLE \
+	CONFIG_NF_FLOW_TABLE_HW
   DEPENDS:=+kmod-nf-conntrack
   $(call AddCommon/nf,$(P_XT)nf_flow_table)
 endef
@@ -1008,9 +1009,9 @@ $(eval $(call KernelPackage,nfnetlink-cttimeout))
 define KernelPackage/nf-conntrack-netlink
   TITLE:=Connection tracking netlink interface
   KCONFIG:= \
-	CONFIG_NF_CT_NETLINK
-	CONFIG_NF_CONNTRACK_EVENTS=y
-	CONFIG_NETFILTER_NETLINK_GLUE_CT=y
+	CONFIG_NF_CT_NETLINK \
+	CONFIG_NF_CONNTRACK_EVENTS=y \
+	CONFIG_NETFILTER_NETLINK_GLUE_CT=y 
   $(call AddDepends/nfnetlink,+kmod-nf-conntrack,$(P_XT)nf_conntrack_netlink)
 endef
 
