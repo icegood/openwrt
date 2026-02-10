@@ -1061,7 +1061,7 @@ define Device/tplink_tl-wa801nd-v5
   TPLINK_FLASHLAYOUT := 8Mmtk
   TPLINK_HWID := 0x08010005
   TPLINK_HWREVADD := 0x5
-  IMAGES := sysupgrade.bin tftp-recovery.bin
+  IMAGES := sysupgrade.bin
   IMAGE/tftp-recovery.bin := pad-extra 128k | $$(IMAGE/factory.bin)
 endef
 TARGET_DEVICES += tplink_tl-wa801nd-v5
