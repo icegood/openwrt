@@ -435,13 +435,13 @@
 			"type": "boolean",
 			"default": true
 		},
-		"log_iapp": {
-			"description": "Enable iapp logging",
+		"log_mlme": {
+			"description": "Enable MLME logging",
 			"type": "boolean",
 			"default": true
 		},
-		"log_mlme": {
-			"description": "Enable MLME logging",
+		"log_nl80211": {
+			"description": "Enable NL 80211 logging",
 			"type": "boolean",
 			"default": true
 		},
@@ -455,19 +455,22 @@
 			"type": "boolean",
 			"default": true
 		},
-		"logger_stdout_level": {
+		"logger_level": {
 			"description": "Log severity",
 			"type": "number",
-			"default": 2,
+			"default": 3,
 			"minimum": 0,
-			"maximum": 4
+			"maximum": 5
 		},
-		"logger_syslog_level": {
-			"description": "Syslog severity",
-			"type": "number",
-			"default": 2,
-			"minimum": 0,
-			"maximum": 4
+		"logto_syslog": {
+			"description": "Enable logigng to syslog",
+			"type": "boolean",
+			"default": true
+		},
+		"logto_file": {
+			"description": "Enable logigng to file (stdout or user defined)",
+			"type": "boolean",
+			"default": false
 		},
 		"macaddr": {
 			"type": "alias",

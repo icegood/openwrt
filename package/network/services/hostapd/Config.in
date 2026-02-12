@@ -4,19 +4,6 @@ config WPA_RFKILL_SUPPORT
 	depends on PACKAGE_hostapd-common
 	default n
 
-config WPA_MSG_MIN_PRIORITY
-	int "Minimum debug message priority"
-	depends on PACKAGE_hostapd-common
-	default 3
-	help
-	  Useful values are:
-	    0 = all messages
-		1 = raw message dumps
-		2 = most debugging messages
-		3 = info messages
-		4 = warnings
-		5 = errors
-
 config WPA_WOLFSSL
 	bool
 	default PACKAGE_wpa-supplicant-wolfssl ||\

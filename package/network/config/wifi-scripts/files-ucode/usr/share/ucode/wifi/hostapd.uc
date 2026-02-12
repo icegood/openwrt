@@ -51,16 +51,21 @@ function set_device_defaults(config) {
 /* setup sylog / stdout */
 function device_log_append(config) {
 	let log_mask = 0;
+	let log_dest_mask = 0;
 
-	for (let k in [ 'log_mlme', 'log_iapp', 'log_driver', 'log_wpa', 'log_radius', 'log_8021x', 'log_80211' ]) {
+	for (let k in [ 'log_nl80211', 'log_mlme', 'none', 'log_driver', 'log_wpa', 'log_radius', 'log_8021x', 'log_80211' ]) {
 		log_mask <<= 1;
 		log_mask |= config[k] ? 1 : 0;
 	}
 
-	append('logger_syslog', log_mask);
-	append('logger_syslog_level', config.logger_syslog_level);
-	append('logger_stdout', log_mask);
-	append('logger_stdout_level', config.logger_stdout_level);
+	for (let k in [ 'logto_file', 'logto_syslog']) {
+		log_dest_mask <<= 1;
+		log_dest_mask |= config[k] ? 1 : 0;
+	}
+
+	append('logger_module', log_mask);
+	append('logger_dest', log_dest_mask);
+	append('logger_level', config.logger_level);
 }
 
 /* setup country code */
