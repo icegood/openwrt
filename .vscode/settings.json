@@ -3,4 +3,6 @@
     "editor.tabSize": 4,         // visual width of a tab
     "editor.insertSpaces": false,
     "editor.detectIndentation": false, // use real tabs, not spaces
+	"search.useIgnoreFiles": false,
+    "search.useGlobalIgnoreFiles": false
 }
