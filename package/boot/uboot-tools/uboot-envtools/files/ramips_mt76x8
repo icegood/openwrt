@@ -1,0 +1,43 @@
+#
+# Copyright (C) 2011-2012 OpenWrt.org
+#
+
+[ -e /etc/config/ubootenv ] && exit 0
+
+touch /etc/config/ubootenv
+
+. /lib/uboot-envtools.sh
+. /lib/functions.sh
+
+board=$(board_name)
+
+case "$board" in
+buffalo,wsr-1166dhp|\
+buffalo,wsr-600dhp|\
+mediatek,linkit-smart-7688|\
+xiaomi,miwifi-nano|\
+xiaomi,mi-router-4c|\
+xiaomi,miwifi-3a|\
+zbtlink,zbt-wg2626)
+	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
+	;;
+xiaomi,miwifi-3c)
+	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
+	ubootenv_add_uci_sys_config "/dev/mtd2" "0x0" "0x4000" "0x10000"
+	;;
+hootoo,ht-tm05|\
+ravpower,rp-wd03)
+	ubootenv_add_mtd "u-boot-env" "0x4000" "0x1000" "0x1000"
+	;;
+snr,cpe-w4n-mt)
+	ubootenv_add_mtd "uboot-env" "0x0" "0x1000" "0x1000"
+	;;
+tplink,tl-wa801nd-v5)
+	ubootenv_add_uci_config "/dev/mtd0" "0x1F000" "0x1000" "0x1000"
+	;;
+esac
+
+config_load ubootenv
+config_foreach ubootenv_add_app_config
+
+exit 0
