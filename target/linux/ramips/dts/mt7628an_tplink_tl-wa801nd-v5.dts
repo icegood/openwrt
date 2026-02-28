@@ -6,6 +6,10 @@
 	compatible = "tplink,tl-wa801nd-v5", "mediatek,mt7628an-soc";
 	model = "TP-Link TL-WA801ND v5";
 
+	chosen {
+		bootargs = "console=ttyS0,115200 loglevel=8";
+	};
+
 	aliases {
 		led-boot = &led_power;
 		led-failsafe = &led_power;
@@ -91,14 +95,45 @@
 	};
 };
 
+&spi0 {
+	flash@0 {
+		partitions {
+			/delete-node/ partition@7c0000; // This removes the "config" node 
+            /delete-node/ partition@7d0000; // This removes the "factory" node
+			partition@0 {
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					/* MAC address at 0x1ebf0 inside the boot partition: relocated manually */
+					macaddr_boot_part: macaddr@0x1ebf0 {
+						reg = <0x1ebf0 0x6>;
+					};
+
+					/* EEPROM/calibration at 0x1EC00 inside the boot partition: relocated manually */
+					eeprom_boot_part: eeprom@1ec00 {
+						reg = <0x1ec00 0x400>;
+					};
+				};
+			};
+			/* Override the firmware partition */
+			partition@20000 {
+				label = "firmware";
+				reg = <0x20000 0x7e0000>;
+			};
+		};
+	};
+};
+
 &wmac {
 	status = "okay";
 
-	nvmem-cells = <&eeprom_factory_20000>, <&macaddr_factory_f100 0>;
+	nvmem-cells = <&eeprom_boot_part>, <&macaddr_boot_part 0>;
 	nvmem-cell-names = "eeprom", "mac-address";
 };
 
 &ethernet {
-	nvmem-cells = <&macaddr_factory_f100 0>;
+	nvmem-cells = <&macaddr_boot_part 1>;
 	nvmem-cell-names = "mac-address";
 };

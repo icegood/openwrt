@@ -1055,9 +1055,10 @@ TARGET_DEVICES += tplink_tl-mr6400-v5
 
 define Device/tplink_tl-wa801nd-v5
   $(Device/tplink-v2)
-  IMAGE_SIZE := 7808k
+  IMAGE_SIZE := 8064k
   DEVICE_MODEL := TL-WA801ND
   DEVICE_VARIANT := v5
+  DEVICE_PACKAGES := -uboot-envtools
   TPLINK_FLASHLAYOUT := 8Mmtk
   TPLINK_HWID := 0x08010005
   TPLINK_HWREVADD := 0x5
