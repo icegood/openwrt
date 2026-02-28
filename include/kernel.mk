@@ -183,18 +183,10 @@ endef
 # 6: if comoon file for module name provided then install to this one
 
 define ModuleAutoLoad
-$(if $(5),
-	mkdir -p $(2)/etc/modules.d
-$(if $(6),
-	echo "#provided by $(6):" >> $(2)/etc/modules.d/$(3)$(1)
-)
-	($(foreach mod,$(5), \
-	echo "$(mod)$(if $(MODPARAMS.$(mod)), $(MODPARAMS.$(mod)),$(if $(MODPARAMS), $(MODPARAMS)))"; \
-) ) > $(2)/etc/modules.d/$(3)$(1)
-$(if $(4),
-	mkdir -p $(2)/etc/modules-boot.d
-	ln -sf ../modules.d/$(3)$(1) $(2)/etc/modules-boot.d/
-)
+$(if $(5), mkdir -p $(2)/etc/modules.d; \
+$(if $(6), echo "#provided by $(6):" >> $(2)/etc/modules.d/$(3)$(1);) \
+($(foreach mod,$(5), echo "$(mod)$(if $(MODPARAMS.$(mod)), $(MODPARAMS.$(mod)),$(if $(MODPARAMS), $(MODPARAMS)))"; ) ) > $(2)/etc/modules.d/$(3)$(1); \
+$(if $(4), mkdir -p $(2)/etc/modules-boot.d; ln -sf ../modules.d/$(3)$(1) $(2)/etc/modules-boot.d/; ) \
 )
 endef
 
@@ -253,23 +245,28 @@ $(call KernelPackage/$(1)/config)
 
   ifneq ($(if $(filter-out %=y %=n %=m,$(KCONFIG)),$(filter m y,$(foreach c,$(call version_filter,$(filter-out %=y %=n %=m,$(KCONFIG))),$($(c)))),.),)
     define Package/kmod-$(1)/install
-		  @for mod in $$(call version_filter,$$(FILES)); do \
+		@all_builtin=1; \
+		for mod in $$(call version_filter,$$(FILES)); do \
 			if grep -q "$$$$$$$${mod##$(LINUX_DIR)/}" "$(LINUX_DIR)/modules.builtin"; then \
 				echo "NOTICE: module '$$$$$$$$mod' is built-in." >&2; \
 			elif [ -e $$$$$$$$mod ]; then \
 				mkdir -p $$(1)/$(MODULES_SUBDIR) ; \
 				$(CP) -L $$$$$$$$mod $$(1)/$(MODULES_SUBDIR)/ ; \
+				all_builtin=0; \
 			else \
 				echo "ERROR: module '$$$$$$$$mod' is missing." >&2; \
 				exit 1; \
 			fi; \
-		  done;
-		  $(if $(FILE_MODULE_NAME),, \
-		  	$(call ModuleAutoLoad,$(1),$$(1),$(filter-out 0-,$(word 1,$(AUTOLOAD))-),$(filter-out 0,$(word 2,$(AUTOLOAD))),$(sort $(wordlist 3,99,$(AUTOLOAD)))) \
-		  )
-		  $(call KernelPackage/$(1)/install,$$(1))
+		done; \
+		$(if $(FILE_MODULE_NAME),, \
+			if [ "$$$$$$$${all_builtin}" = "0" ]; then \
+				true; \
+				$(call ModuleAutoLoad,$(1),$$(1),$(filter-out 0-,$(word 1,$(AUTOLOAD))-),$(filter-out 0,$(word 2,$(AUTOLOAD))),$(sort $(wordlist 3,99,$(AUTOLOAD)))) \
+			fi; \
+		)
+		$(call KernelPackage/$(1)/install,$$(1))
     endef
-	ifneq ($(FILE_MODULE_NAME),)
+ifneq ($(FILE_MODULE_NAME),)
 define Package/kmod-$(1)/postinst
 #!/bin/sh
 [ -n "$$$${IPKG_INSTROOT}" ] && exit 0
