@@ -27,7 +27,11 @@ LOADADDR := $(loadaddr-y)
 LOADER_PLATFORM := $(ldrplatform-y)
 LOADER_FLASH_START := $(ldrflashstart-y)
 
-KERNEL_DTB = kernel-bin | append-dtb | lzma
+define Build/save-kernel-dtb
+	cp $@ $(BIN_DIR)/$(DEVICE_IMG_PREFIX)-kernel-with-dtb.bin
+endef
+
+KERNEL_DTB = kernel-bin | append-dtb | save-kernel-dtb | lzma
 
 define Build/jcg-header
 	$(STAGING_DIR_HOST)/bin/jcgimage -v $(1) \
