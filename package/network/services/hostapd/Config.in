@@ -4,6 +4,18 @@ config WPA_RFKILL_SUPPORT
 	depends on PACKAGE_hostapd-common
 	default n
 
+config WIFI_BIN_11AC_SUPPORT
+	bool "Ability to support 11AC on binary level"
+	default y
+
+config WIFI_BIN_11AX_SUPPORT
+	bool "Ability to support 11AX on binary level"
+	default y
+
+config WIFI_BIN_11BE_SUPPORT
+	bool "Ability to support 11BE on binary level"
+	default y
+
 config WPA_WOLFSSL
 	bool
 	default PACKAGE_wpa-supplicant-wolfssl ||\

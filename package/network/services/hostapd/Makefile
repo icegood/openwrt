@@ -74,20 +74,20 @@ TARGET_LDFLAGS_C:=$(TARGET_LDFLAGS)
 
 STAMP_CONFIGURED:=$(STAMP_CONFIGURED)
 
-ifneq ($(CONFIG_DRIVER_11AC_SUPPORT),)
+# 802.11ac Support
+ifneq ($($(if $(CONFIG_WIFI_BIN_11AC_SUPPORT),CONFIG_DRIVER_11AC_SUPPORT)),)
   HOSTAPD_IEEE80211AC:=y
 endif
 
-ifneq ($(CONFIG_DRIVER_11AX_SUPPORT),)
+# 802.11ax Support
+ifneq ($($(if $(CONFIG_WIFI_BIN_11AX_SUPPORT),CONFIG_DRIVER_11AX_SUPPORT)),)
   HOSTAPD_IEEE80211AX:=y
 endif
 
-ifneq ($(LOCAL_VARIANT),mini)
-  ifneq ($(CONFIG_DRIVER_11BE_SUPPORT),)
-    HOSTAPD_IEEE80211BE:=y
-  endif
+# 802.11be Support
+ifneq ($($(if $(CONFIG_WIFI_BIN_11BE_SUPPORT),CONFIG_DRIVER_11BE_SUPPORT)),)
+  HOSTAPD_IEEE80211BE:=y
 endif
-
 
 CORE_DEPENDS = +ucode +libucode \
 	+ucode-mod-fs +ucode-mod-nl80211 +ucode-mod-rtnl +ucode-mod-ubus +ucode-mod-uloop \
