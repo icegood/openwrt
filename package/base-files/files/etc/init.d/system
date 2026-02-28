@@ -7,8 +7,8 @@ USE_PROCD=1
 validate_system_section() {
 	uci_load_validate system system "$1" "$2" \
 		'hostname:string:OpenWrt' \
-		'conloglevel:uinteger' \
-		'buffersize:uinteger' \
+		'log_priority:uinteger' \
+		'log_dmesg_size:uinteger' \
 		'timezone:string:GMT0' \
 		'zonename:string:UTC'
 }
@@ -20,7 +20,7 @@ system_config() {
 	}
 
 	echo "$hostname" > /proc/sys/kernel/hostname
-	[ -z "$conloglevel" -a -z "$buffersize" ] || dmesg ${conloglevel:+-n $conloglevel} ${buffersize:+-s $buffersize}
+	dmesg ${log_priority:+-n $log_priority} -s $((${log_dmesg_size:-16}*1024))
 	echo "$timezone" > /tmp/TZ
 	[ -n "$zonename" ] && [ -f "/usr/share/zoneinfo/${zonename// /_}" ] \
 		&& ln -sf "/usr/share/zoneinfo/${zonename// /_}" /tmp/localtime \
