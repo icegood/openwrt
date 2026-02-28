@@ -49,7 +49,23 @@ endif
 
 export GCC_HONOUR_COPTS=s
 
+define Image/pad-to2
+	size=$$$$(stat -c%s $(1)); \
+	block=$(2); \
+	pad_byte=$(if $(3),$(3),00); \
+	new_size=$$$$(( ( ($$$$size + $$$$block - 1) / $$$$block ) * $$$$block )); \
+	pad_len=$$$$(( $$$$new_size - $$$$size )); \
+	if [ $$$$pad_len -ne 0 ]; then \
+		for i in $$$$(seq 1 $$$$pad_len); do \
+			printf "\\x$$$$pad_byte"; \
+		done >> $(1); \
+	fi
+endef
+
 define Package/u-boot/install/default
+	@for img in $(patsubst %,$(PKG_BUILD_DIR)/%,$(UBOOT_IMAGE)); do \
+		$(call Image/pad-to2,$$$$img,65536,ff); \
+	done
 	$(CP) $(patsubst %,$(PKG_BUILD_DIR)/%,$(UBOOT_IMAGE)) $(1)/
 endef
 
