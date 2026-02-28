@@ -1,0 +1,162 @@
+--- a/drivers/mtd/mtdpart.c
++++ b/drivers/mtd/mtdpart.c
+@@ -40,6 +40,22 @@ void release_mtd_partition(struct mtd_in
+ 	free_partition(mtd);
+ }
+ 
++static void mtd_log_hierarchy(struct mtd_info *mtd)
++{
++	struct mtd_info *master = mtd_get_master(mtd);
++	u64 abs_start = mtd_get_master_ofs(mtd, master->part.offset);
++	u64 abs_end = abs_start + mtd->part.size;
++
++	if (mtd_is_partition(mtd->parent)) {
++		printk(KERN_NOTICE "  └─ Abs: [0x%012llx-0x%012llx] (Related offset: 0x%llx) inside \"%s\" : \"%s\"\n",
++			(unsigned long long)abs_start, (unsigned long long)abs_end,
++			(unsigned long long)mtd->part.offset, mtd->parent->name, mtd->name);
++	} else {
++		printk(KERN_NOTICE "[0x%012llx-0x%012llx] : \"%s\"\n",
++			(unsigned long long)abs_start, (unsigned long long)abs_end, mtd->name);
++	}
++}
++
+ static struct mtd_info *allocate_partition(struct mtd_info *parent,
+ 					   const struct mtd_partition *part,
+ 					   int partno, uint64_t cur_offset)
+@@ -126,9 +142,7 @@ static struct mtd_info *allocate_partiti
+ 	if (child->part.size == MTDPART_SIZ_FULL)
+ 		child->part.size = parent_size - child->part.offset;
+ 
+-	printk(KERN_NOTICE "0x%012llx-0x%012llx : \"%s\"\n",
+-	       child->part.offset, child->part.offset + child->part.size,
+-	       child->name);
++	mtd_log_hierarchy(child);
+ 
+ 	/* let's do some sanity checks */
+ 	if (child->part.offset >= parent_size) {
+@@ -339,6 +353,8 @@ static int parse_mtd_partitions_by_type(
+ 	return ret;
+ }
+ 
++static int mtd_add_partition2(struct mtd_info *parent, struct mtd_partition *part);
++
+ static int
+ run_parsers_by_type(struct mtd_info *child, enum mtd_parser_type type)
+ {
+@@ -355,13 +371,15 @@ run_parsers_by_type(struct mtd_info *chi
+ 		return 0;
+ 
+ 	for (i = 0; i < nr_parts; i++) {
+-		/* adjust partition offsets */
++		/** Add subpartition of child nearby child instead of inside of child 
++		 * Possibly, to not think much about the cases 
++		 * when parts[i] is supposed to be rw while child is ro
++		 */
++		printk(KERN_NOTICE "Attach extra partition '%s' inside '%s'\n",
++			parts[i].name, child->parent->name);
+ 		parts[i].offset += child->part.offset;
+ 
+-		mtd_add_partition(child->parent,
+-				  parts[i].name,
+-				  parts[i].offset,
+-				  parts[i].size);
++		mtd_add_partition2(child->parent, parts + i);
+ 	}
+ 
+ 	kfree(parts);
+@@ -375,12 +393,7 @@ run_parsers_by_type(struct mtd_info *chi
+ #define SPLIT_FIRMWARE_NAME	"unused"
+ #endif
+ 
+-static void split_firmware(struct mtd_info *master, struct mtd_info *part)
+-{
+-	run_parsers_by_type(part, MTD_PARSER_TYPE_FIRMWARE);
+-}
+-
+-static void mtd_partition_split(struct mtd_info *master, struct mtd_info *part)
++static void mtd_partition_split(struct mtd_info *part)
+ {
+ 	static int rootfs_found = 0;
+ 
+@@ -397,36 +410,28 @@ static void mtd_partition_split(struct m
+ 	if (IS_ENABLED(CONFIG_MTD_SPLIT_FIRMWARE) &&
+ 	    !strcmp(part->name, SPLIT_FIRMWARE_NAME) &&
+ 	    !of_property_present(mtd_get_of_node(part), "compatible"))
+-		split_firmware(master, part);
++		run_parsers_by_type(part, MTD_PARSER_TYPE_FIRMWARE);
+ }
+ 
+-int mtd_add_partition(struct mtd_info *parent, const char *name,
+-		      long long offset, long long length)
++static int mtd_add_partition2(struct mtd_info *parent, struct mtd_partition *part)
+ {
+ 	struct mtd_info *master = mtd_get_master(parent);
+ 	u64 parent_size = mtd_is_partition(parent) ?
+ 			  parent->part.size : parent->size;
+-	struct mtd_partition part;
+ 	struct mtd_info *child;
+ 	int ret = 0;
+ 
+ 	/* the direct offset is expected */
+-	if (offset == MTDPART_OFS_APPEND ||
+-	    offset == MTDPART_OFS_NXTBLK)
++	if (part->offset == MTDPART_OFS_APPEND || part->offset == MTDPART_OFS_NXTBLK)
+ 		return -EINVAL;
+ 
+-	if (length == MTDPART_SIZ_FULL)
+-		length = parent_size - offset;
++	if (part->size == MTDPART_SIZ_FULL)
++		part->size = parent_size - part->offset;
+ 
+-	if (length <= 0)
++	if (part->size <= 0)
+ 		return -EINVAL;
+ 
+-	memset(&part, 0, sizeof(part));
+-	part.name = name;
+-	part.size = length;
+-	part.offset = offset;
+-
+-	child = allocate_partition(parent, &part, -1, offset);
++	child = allocate_partition(parent, part, -1, part->offset);
+ 	if (IS_ERR(child))
+ 		return PTR_ERR(child);
+ 
+@@ -438,7 +443,7 @@ int mtd_add_partition(struct mtd_info *p
+ 	if (ret)
+ 		goto err_remove_part;
+ 
+-	mtd_partition_split(parent, child);
++	mtd_partition_split(child);
+ 	mtd_add_partition_attrs(child);
+ 
+ 	return 0;
+@@ -452,6 +457,19 @@ err_remove_part:
+ 
+ 	return ret;
+ }
++
++int mtd_add_partition(struct mtd_info *parent, const char *name,
++	long long offset, long long length) {
++	struct mtd_partition part;
++
++	memset(&part, 0, sizeof(part));
++	part.name = name;
++	part.size = length;
++	part.offset = offset;
++
++	return mtd_add_partition2(parent, &part);
++}
++
+ EXPORT_SYMBOL_GPL(mtd_add_partition);
+ 
+ /**
+@@ -582,7 +600,7 @@ int add_mtd_partitions(struct mtd_info *
+ 			goto err_del_partitions;
+ 		}
+ 
+-		mtd_partition_split(master, child);
++		mtd_partition_split(child);
+ 		mtd_add_partition_attrs(child);
+ 
+ 		/* Look for subpartitions (skip if no maching parser found) */

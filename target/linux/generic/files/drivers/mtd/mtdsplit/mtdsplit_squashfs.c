@@ -21,6 +21,9 @@
 
 #include "mtdsplit.h"
 
+#define ROOTFS_SPLIT_SQUASH "root_squashfs"
+#define NPARTS 2
+
 static int
 mtdsplit_parse_squashfs(struct mtd_info *master,
 			const struct mtd_partition **pparts,
@@ -36,30 +39,33 @@ mtdsplit_parse_squashfs(struct mtd_info *master,
 	if (err) {
 		pr_info("mtd_get_squashfs_len no size\n");
 		return err;
-	} else {
-		pr_info("mtd_get_squashfs_len size %llu\n", (unsigned long long)squashfs_len);
 	}
 
 	parent_mtd = mtd_get_master(master);
 	part_offset = mtdpart_get_offset(master);
-	pr_info("mtdsplit_parse_squashfs parent: %llu never used: %llu\n",
-		(unsigned long long)master->size,
-		(unsigned long long)((master->size - squashfs_len)&(parent_mtd->erasesize - 1)));
+	pr_info("r/o len: %zX never used: %llX inside master '%s'\n", squashfs_len,
+		(unsigned long long)((master->size - squashfs_len)&(parent_mtd->erasesize - 1)),
+		master->name);
 
-	part = kzalloc(sizeof(*part), GFP_KERNEL);
+	part = kzalloc(NPARTS * sizeof(*part), GFP_KERNEL);
 	if (!part) {
-		pr_alert("unable to allocate memory for \"%s\" partition\n",
-			 ROOTFS_SPLIT_NAME);
+		pr_alert("unable to allocate memory for \"%s\" partition\n", ROOTFS_SPLIT_NAME);
 		return -ENOMEM;
 	}
 
-	part->name = ROOTFS_SPLIT_NAME;
-	part->offset = mtd_roundup_to_eb(part_offset + squashfs_len,
-					 parent_mtd) - part_offset;
-	part->size = mtd_rounddown_to_eb(master->size - part->offset, master);
+	size_t aligned_offset = 
+		mtd_roundup_to_eb(part_offset + squashfs_len, parent_mtd) - part_offset;
+
+	part[0].name = ROOTFS_SPLIT_SQUASH;
+	part[0].offset = 0;
+	part[0].size = aligned_offset;
+
+	part[1].name = ROOTFS_SPLIT_NAME;
+	part[1].offset = aligned_offset;
+	part[1].size = MTDPART_SIZ_FULL;
 
 	*pparts = part;
-	return 1;
+	return NPARTS;
 }
 
 static struct mtd_part_parser mtdsplit_squashfs_parser = {

@@ -19,10 +19,11 @@
 
 #include "mtdsplit.h"
 
-#define TPLINK_NR_PARTS		2
+#define TPLINK_NR_PARTS		3
 #define TPLINK_MIN_ROOTFS_OFFS	0x80000	/* 512KiB */
 
 #define MD5SUM_LEN  16
+#define HEADER_NAME "tp_link_header"
 
 struct fw_v1 {
 	char		vendor_name[24];
@@ -106,7 +107,7 @@ static int mtdsplit_parse_tplink(struct mtd_info *master,
 		if (be32_to_cpu(hdr.v1.kernel_ofs) != sizeof(hdr))
 			return -EINVAL;
 
-		kernel_size = sizeof(hdr) + be32_to_cpu(hdr.v1.kernel_len);
+		kernel_size =  be32_to_cpu(hdr.v1.kernel_len);
 		rootfs_offset = be32_to_cpu(hdr.v1.rootfs_ofs);
 		break;
 	case 2:
@@ -114,14 +115,14 @@ static int mtdsplit_parse_tplink(struct mtd_info *master,
 		if (be32_to_cpu(hdr.v2.kernel_ofs) != sizeof(hdr))
 			return -EINVAL;
 
-		kernel_size = sizeof(hdr) + be32_to_cpu(hdr.v2.kernel_len);
+		kernel_size = be32_to_cpu(hdr.v2.kernel_len);
 		rootfs_offset = be32_to_cpu(hdr.v2.rootfs_ofs);
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	if (kernel_size > master->size)
+	if (sizeof(hdr) + kernel_size > master->size)
 		return -EINVAL;
 
 	/* Find the rootfs */
@@ -141,13 +142,17 @@ static int mtdsplit_parse_tplink(struct mtd_info *master,
 	if (!parts)
 		return -ENOMEM;
 
-	parts[0].name = KERNEL_PART_NAME;
+	parts[0].name = HEADER_NAME;
 	parts[0].offset = 0;
-	parts[0].size = kernel_size;
+	parts[0].size = hdr_len;
 
-	parts[1].name = ROOTFS_PART_NAME;
-	parts[1].offset = rootfs_offset;
-	parts[1].size = master->size - rootfs_offset;
+	parts[1].name = KERNEL_PART_NAME;
+	parts[1].offset = hdr_len;
+	parts[1].size = kernel_size;
+
+	parts[2].name = ROOTFS_PART_NAME;
+	parts[2].offset = rootfs_offset;
+	parts[2].size = master->size - rootfs_offset;
 
 	*pparts = parts;
 	return TPLINK_NR_PARTS;
