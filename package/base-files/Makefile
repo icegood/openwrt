@@ -51,8 +51,6 @@ endef
 
 define Package/base-files/conffiles
 /etc/config/
-/etc/config/network
-/etc/config/system
 /etc/dropbear/
 /etc/ethers
 /etc/group
