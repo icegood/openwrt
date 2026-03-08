@@ -73,6 +73,7 @@ MESON_ARGS += \
 
 define Package/apk/conffiles
 /etc/apk/repositories.d/customfeeds.list
+/etc/apk/keys/
 endef
 
 Package/apk-mbedtls/conffiles = $(Package/apk/conffiles)
@@ -86,6 +87,8 @@ define Package/apk/default/install
 
 	$(INSTALL_DIR) $(1)/etc/apk/repositories.d
 	$(INSTALL_DATA) ./files/customfeeds.list $(1)/etc/apk/repositories.d/customfeeds.list
+	$(INSTALL_DIR) $(1)/etc/apk/keys
+	$(INSTALL_DATA) ./files/icegood.pub $(1)/etc/apk/keys/icegood.pub
 endef
 
 Package/apk-mbedtls/install = $(Package/apk/default/install)

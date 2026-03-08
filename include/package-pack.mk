@@ -148,6 +148,25 @@ $(strip
 )
 endef
 
+# For .ice ABI suffixes, also expose the exact same ABI name without the
+# trailing .ice marker, e.g. libubus20251202.ice -> libubus20251202.
+#
+# This helps upstream packages depending on exact ABI package names resolve to
+# local .ice variants, while avoiding unsafe cross-ABI aliases.
+#
+# 1: package name
+# 2: package version
+# 3: ABI version
+define AddIceCompatProvide
+$(strip
+  $(if $(filter %.ice,$(3)),
+    $(if $(patsubst %.ice,%,$(3)),
+      $(call AddProvide,$(1),$(2),$(patsubst %.ice,%,$(3)))
+    )
+  )
+)
+endef
+
 # Remove virtual provides prefix and self. apk doesn't like it when packages
 # specify a redundant provide pointing to self.
 #
@@ -406,7 +425,7 @@ endif
       Package/$(1)/PROVIDES := $$(patsubst @%,%,$(PROVIDES))
       Package/$(1)/PROVIDES := $$(filter-out $(1)$$(ABIV_$(1)),$$(Package/$(1)/PROVIDES)$$(if $$(ABIV_$(1)), $(1) $$(foreach provide,$$(Package/$(1)/PROVIDES),$$(provide)$$(ABIV_$(1)))))
     else
-      Package/$(1)/PROVIDES := $$(call FormatProvides,$(1),$(VERSION),$(ABI_VERSION),$(PROVIDES))
+      Package/$(1)/PROVIDES := $$(call FormatProvides,$(1),$(VERSION),$(ABI_VERSION),$(PROVIDES)) $$(call AddIceCompatProvide,$(1),$(VERSION),$(ABI_VERSION))
       Package/$(1)/PRIORITY := $$(call GetProviderPriority,$(DEFAULT_VARIANT),$(ABI_VERSION))
     endif
 

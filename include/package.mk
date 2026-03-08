@@ -292,6 +292,9 @@ endef
 define BuildPackage
   $(eval $(Package/Default))
   $(eval $(Package/$(1)))
+  # ICE_GIT changes
+  $(eval ABI_VERSION:=$(ABI_VERSION)$(if $(findstring $(ICE_GIT),$(URL) $(PKG_SOURCE_URL)),.ice,))
+  $(eval MAINTAINER:=$(if $(findstring $(ICE_GIT),$(URL)),sivanov <icegood1980@gmail.com>,$(MAINTAINER)))
 
   # Add an implicit self-provide. apk can't handle self provides, be it
   # versioned or virtual, so opt for a suffix instead. This allows several
