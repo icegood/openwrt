@@ -12,8 +12,14 @@ GCC_CONFIGURE += \
 	--enable-lto \
 	--with-libelf=$(STAGING_DIR_HOST)
 
-ifndef CONFIG_USE_GLIBC
-  GCC_CONFIGURE += --disable-libsanitizer
+ifeq ($(CONFIG_USE_GLIBC),)
+  ifneq ($(filter x86_64 aarch64,$(ARCH)),)
+    GCC_CONFIGURE += --enable-libsanitizer
+  else
+    GCC_CONFIGURE += --disable-libsanitizer
+  endif
+else
+  GCC_CONFIGURE += --enable-libsanitizer
 endif
 
 ifdef CONFIG_USE_MUSL
