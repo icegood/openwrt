@@ -69,6 +69,7 @@ define Build/Unpack/GitCommon
 	mkdir -p $(1)
 	( cd $(1); \
 		ln -sf "$$$$(realpath --relative-to=. "$(2)")" .git; \
+		git fetch; \
 		git checkout .; \
 		git submodule update --recursive --depth 1; \
 		git submodule foreach git config --unset core.worktree; \
@@ -87,15 +88,21 @@ endef
 define Build/Unpack/USE_SOURCE_DIR
 	rm -rf $(1)
 	$(if $(wildcard $(USE_SOURCE_DIR)/*),,@echo "Error: USE_SOURCE_DIR=$(USE_SOURCE_DIR) path not found"; false)
-	ln -snf $(USE_SOURCE_DIR) $(1)
+	mkdir -p $(1)
+	( cd $(1); \
+		ln -sf "$$$$(realpath --relative-to=. "$(USE_SOURCE_DIR)")" .git; \
+		git checkout .; \
+	)
 	touch $(1)/.source_dir
 endef
 
 ifneq ($(wildcard $(TOPDIR)/git-src/$(PKG_NAME)/.git),)
   USE_GIT_SRC_CHECKOUT:=1
+  PKG_FILE_DEPENDS += $(TOPDIR)/git-src/$(PKG_NAME)
 endif
 ifneq ($(if $(CONFIG_SRC_TREE_OVERRIDE),$(wildcard ./git-src)),)
   USE_GIT_TREE:=1
+  PKG_FILE_DEPENDS += $(CURDIR)/git-src
 endif
 
 ifdef USE_GIT_SRC_CHECKOUT
@@ -108,10 +115,16 @@ else
   UNPACK ?= Build/Unpack/Default
 endif
 
-ifdef PKG_BUILD_DIR
-  PKG_UNPACK=$(call $(UNPACK),$(PKG_BUILD_DIR))
+ifdef USE_SOURCE_DIR
+  ifdef PKG_BUILD_DIR
+    PKG_UNPACK=$(call $(UNPACK),$(PKG_BUILD_DIR))
+  endif
 else
-  PKG_UNPACK=
+  ifdef PKG_BUILD_DIR
+    PKG_UNPACK=$(call $(UNPACK),$(PKG_BUILD_DIR))
+  else
+    PKG_UNPACK=
+  endif
 endif
 
 ifdef HOST_BUILD_DIR
