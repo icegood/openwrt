@@ -86,6 +86,7 @@ define Package/jshn/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share/libubox
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/jshn $(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/libubox/jshn.sh $(1)/usr/share/libubox
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/libubox/uci_json.sh $(1)/usr/share/libubox
 endef
 
 define Package/libjson-script/install
