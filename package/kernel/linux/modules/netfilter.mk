@@ -192,7 +192,7 @@ endef
 $(eval $(call KernelPackage,nf-tproxy))
 
 define KernelPackage/nf-ipt
-  TITLE:=Iptables core
+  TITLE:=iptables => netfilter glue core
   KCONFIG:=$(KCONFIG_NF_IPT)
   $(call AddCommon/nf,$(NF_IPT-m))
 endef
@@ -256,6 +256,21 @@ define KernelPackage/ipt-core
   DEPENDS:=+kmod-nf-reject +kmod-nf-ipt +kmod-nf-log
   $(call AddCommon/ipt,$(IPT_CORE-m))
 endef
+
+define KernelPackage/br-netfilter
+  TITLE:=Bridge netfilter support modules
+  KCONFIG:=CONFIG_BRIDGE_NETFILTER
+  DEPENDS:=+kmod-nf-conntrack
+  $(call AddCommon/nf,bridge/br_netfilter)
+endef
+
+define KernelPackage/br-netfilter/install
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(INSTALL_DATA) ./files/sysctl-br-netfilter.conf $(1)/etc/sysctl.d/11-br-netfilter.conf
+endef
+
+$(eval $(call KernelPackage,br-netfilter))
+
 
 define KernelPackage/ipt-core/description
  Netfilter core kernel modules
@@ -849,24 +864,9 @@ endef
 
 $(eval $(call KernelPackage,arptables))
 
-
-define KernelPackage/br-netfilter
-  TITLE:=Bridge netfilter support modules
-  KCONFIG:=CONFIG_BRIDGE_NETFILTER
-  $(call AddDepends/ipt,,bridge/br_netfilter)
-endef
-
-define KernelPackage/br-netfilter/install
-	$(INSTALL_DIR) $(1)/etc/sysctl.d
-	$(INSTALL_DATA) ./files/sysctl-br-netfilter.conf $(1)/etc/sysctl.d/11-br-netfilter.conf
-endef
-
-$(eval $(call KernelPackage,br-netfilter))
-
-
 define KernelPackage/ebtables
   TITLE:=Bridge firewalling modules
-  DEPENDS:=+kmod-ipt-core
+  DEPENDS:=+kmod-nf-ipt
   KCONFIG:=$(KCONFIG_EBTABLES)
   $(call AddCommon/eptables,$(EBTABLES-m))
 endef
