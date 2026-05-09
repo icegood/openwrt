@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/net/iproute2
 PKG_HASH:=6ba520e1975e4c50dc931eeae91ea37c198b8a173744885f8895b84325f9d456
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=iptables
+PKG_BUILD_DEPENDS:=$(if $(CONFIG_PACKAGE_tc-full),iptables,)
 PKG_LICENSE:=GPL-2.0
 PKG_CPE_ID:=cpe:/a:iproute2_project:iproute2
 
