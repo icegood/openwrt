@@ -80,10 +80,37 @@ switch_to_ramfs() {
 		$RAMFS_COPY_LVM vgchange -aln --ignorelockingfailure
 	}
 
-	grep /overlay /proc/mounts > /dev/null && {
-		/bin/mount -o noatime,remount,ro /overlay
-		/bin/umount -l /overlay
-	}
+	# Enhanced /overlay unmounting with retries (fixes "Resource busy" on USB sysupgrade)
+	if grep /overlay /proc/mounts > /dev/null 2>&1; then
+		v "Attempting to unmount /overlay filesystem..."
+		
+		sync
+		sleep 1
+		/bin/mount -o noatime,remount,ro /overlay 2>/dev/null || true
+		sleep 1
+		
+		local max_retries=20
+		local retry_count=0
+		local unmounted=0
+		
+		while [ $retry_count -lt $max_retries ]; do
+			if /bin/umount -l /overlay 2>/dev/null; then
+				unmounted=1
+				v "Successfully unmounted /overlay"
+				break
+			fi
+			
+			retry_count=$((retry_count + 1))
+			if [ $retry_count -lt $max_retries ]; then
+				[ $((retry_count % 5)) -eq 0 ] && v "Retry $retry_count/$max_retries to unmount /overlay..."
+				sleep 1
+			fi
+		done
+		
+		if [ $unmounted -eq 0 ] && grep /overlay /proc/mounts > /dev/null 2>&1; then
+			v "Warning: /overlay could not be fully unmounted (resource busy), but continuing upgrade..."
+		fi
+	fi
 }
 
 kill_remaining() { # [ <signal> [ <loop> ] ]
