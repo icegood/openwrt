@@ -1,0 +1,25 @@
+From: Serhii Ivanov <icegood1980@gmail.com>
+Date: Sat, 16 May 2026 14:25:00 +0300
+Subject: [PATCH] mtd: cfi_probe: print erase region geometry at probe
+
+Always print erase region layout (count x size per region) during CFI
+probe, so flash geometry is visible in kernel log.
+
+--- a/drivers/mtd/chips/cfi_probe.c
++++ b/drivers/mtd/chips/cfi_probe.c
+@@ -282,6 +282,15 @@
+ 	       map->name, cfi->interleave, cfi->device_type*8, base,
+ 	       map->bankwidth*8, cfi->mfr, cfi->id);
+ 
++	printk(KERN_INFO "  erase regions:");
++	for (i = 0; i < cfi->cfiq->NumEraseRegions; i++) {
++		unsigned long r = cfi->cfiq->EraseRegionInfo[i];
++		unsigned blocks = (r & 0xffff) + 1;
++		unsigned blk_size = ((r >> 8) & ~0xff) / 1024;
++		printk(KERN_CONT " %dx%dKB", blocks, blk_size);
++	}
++	printk(KERN_CONT "\n");
++
+ 	return 1;
+ }
+ 

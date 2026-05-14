@@ -41,6 +41,9 @@ ampedwireless,ally-r1900k)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x20000" "4"
 	;;
 arcadyan,we420223-99|\
+dlink,dir-620-a1)
+	ubootenv_add_uci_config "/dev/mtd0" "0x20000" "0x1000" "0x10000"
+	;;
 dlink,dir-806a-b1)
 	ubootenv_add_uci_config "/dev/mtd2" "0x0" "0x1000" "0x1000"
 	;;
@@ -107,6 +110,9 @@ xiaomi,miwifi-nano|\
 zbtlink,zbt-wg2626|\
 zte,mf283plus)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
+	;;
+dlink,dir-620-a1)
+	ubootenv_add_uci_config "/dev/mtd0" "0x5e000" "0x1000" "0x1000"
 	;;
 dna,valokuitu-plus-ex400|\
 genexis,pulse-ex400)

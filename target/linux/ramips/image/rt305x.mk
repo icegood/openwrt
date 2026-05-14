@@ -459,7 +459,9 @@ TARGET_DEVICES += dlink_dir-615-h1
 define Device/dlink_dir-620-a1
   BLOCKSIZE := 64k
   SOC := rt3050
-  IMAGE_SIZE := 7872k
+  IMAGE_SIZE := 8000k
+  DEVICE_DTS :=
+  KERNEL := kernel-bin | lzma | uImage lzma
   DEVICE_VENDOR := D-Link
   DEVICE_MODEL := DIR-620
   DEVICE_VARIANT := A1
